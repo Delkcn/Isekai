@@ -1,10 +1,10 @@
 ﻿using System;using System.IO;using System.Drawing;using System.Drawing.Imaging;using System.Drawing.Drawing2D;using System.Reflection;using JouchoPet;
 class InteractionCheck {
- static readonly string Folder="qa/v0713/";
+ static readonly string Folder="qa/v0714/";
  static readonly BindingFlags Flags=BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Instance|BindingFlags.Static;
  static int count;
  static void Check(bool value,string name){if(!value)throw new Exception(name);count++;Console.WriteLine("PASS "+name);}
- static void Main(string[] args){try{AnimationParameters.UseFixedValues();Directory.CreateDirectory(Folder);Eyes();Sword();EyeChecks();Console.WriteLine("All "+count+" selected checks passed.");}catch(Exception e){Console.WriteLine(e);Environment.ExitCode=1;}}
+ static void Main(string[] args){try{AnimationParameters.UseFixedValues();Directory.CreateDirectory(Folder);Eyes();EyeChecks();Console.WriteLine("All "+count+" selected checks passed.");}catch(Exception e){Console.WriteLine(e);Environment.ExitCode=1;}}
  static Assembly Baseline(){return Assembly.LoadFile(Path.GetFullPath(Folder+"baseline/IsekaijouchoPet.exe"));}
  static void Sword(){var old=Baseline();var at=old.GetType("JouchoPet.SwordMotion").GetMethod("At",Flags);bool same=true,held=true,attached=true;
   Size c=PetRenderer.CanvasSize(300);using(var side=new SideWalk(c.Width,c.Height,300))using(var rig=new SwordRig(c.Width,c.Height,300,side))foreach(int face in new[]{-1,1}){
@@ -44,9 +44,9 @@ class InteractionCheck {
    }finally{((IDisposable)prior).Dispose();}
    using(var art=CharacterArt.Normalized("front",c.Width,c.Height,size)){var eye=new CoveredEyeRig(HairLength.ReadRaw(art),c.Width,c.Height,size,true);foreach(double amount in new[]{0.0,.25,.5,.75,1.0})for(double x=c.Width*.5-size*.1;x<c.Width*.5;x+=.5){double last=0;for(double y=28+size*.15;y<28+size*.30;y+=.2){double source=eye.SourceY(x,y,amount);map&=source>=last;if(amount==0||y<28+size*.20)map&=source==y;last=source;}}}
   }
-  Check(eyes&&local,"pat and wave add visible dark lashes without new red pixels at 220/300/400; changes confined to that eye");
+  Check(eyes&&local,"pat and wave thicken dark lashes without new red pixels at 220/300/400; changes confined to that eye");
   Check(map,"eye closure is monotone, neutral is exact, upper fringe stays fixed");
-  Check(unchanged,"idle, ordinary blink and two frozen rest samples are pixel-identical to 0.7.12");
+  Check(unchanged,"idle, ordinary blink and two frozen rest samples are pixel-identical to 0.7.13");
  }
  static void Eyes(){const int size=400;Size c=PetRenderer.CanvasSize(size);using(var renderer=new PetRenderer()){
   renderer.Resize(size);

@@ -1,4 +1,4 @@
-﻿# Isekaijoucho Pet 0.7.13-preview
+﻿# Isekaijoucho Pet 0.7.14-preview
 
 ## 运行
 
@@ -7,6 +7,8 @@
 需要 Windows 和 .NET Framework 4.8。
 
 ## 本次接入
+
+- v0.7.14：右眼闭眼睫毛加粗并调整为与左眼接近的深色，保留刘海遮挡、两端收尖和头部运动。3 项针对性检查通过，已看放大预览。其他动作保持。
 
 - v0.7.13：为摸头/挥手时闭合的右眼添加细小深棕睫毛，贴合眼缘并保留刘海遮挡。6 项针对性检查通过，面部前后对照见 preview/review.html。挥剑和其他动作保持。
 
@@ -332,4 +334,4 @@ assets/v066/FACE-EDIT-PROMPTS.md；此前调色、比例与辅助图层记录仍
 
 ## 仓库构建与验证
 
-运行 `./Build.ps1 -Target App` 构建；当前针对性检查为 `./Build.ps1 -Target InteractionCheck` 后运行 `./InteractionCheck.exe`。当前预览为 `qa/v0713/review.html`。历史测试需要本地历史基线，本仓库不上传这些旧版本备份。
+运行 `./Build.ps1 -Target App` 构建；当前检查为 `./Build.ps1 -Target InteractionCheck` 后运行 `./InteractionCheck.exe`。当前预览为 `qa/v0714/review.html`。历史测试需要原项目的历史基线。

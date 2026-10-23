@@ -1,0 +1,10 @@
+Eye / 220 / pat darkened lash pixels=6 new=0 changed=6
+Eye / 220 / wave darkened lash pixels=7 new=0 changed=7
+Eye / 300 / pat darkened lash pixels=11 new=0 changed=11
+Eye / 300 / wave darkened lash pixels=15 new=0 changed=15
+Eye / 400 / pat darkened lash pixels=24 new=0 changed=26
+Eye / 400 / wave darkened lash pixels=23 new=0 changed=24
+PASS pat and wave thicken dark lashes without new red pixels at 220/300/400; changes confined to that eye
+PASS eye closure is monotone, neutral is exact, upper fringe stays fixed
+PASS idle, ordinary blink and two frozen rest samples are pixel-identical to 0.7.13
+All 3 selected checks passed.

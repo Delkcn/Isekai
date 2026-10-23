@@ -67,16 +67,17 @@ namespace JouchoPet {
    double sx=face.Anchor+(x-canvasWidth*.5)/scale;
    if(sx<866||sx>875)return pixel;
    double sy=face.Crown+(y-28)/scale,u=(sx-870.5)/4.5;
-   // A short, tapered dark-brown lid and a tiny outer lash, clipped to the
+   // Match the exposed left lid's dark, filled lash weight, clipped to the
    // visible aperture. Coordinates precede head motion and the closure warp.
    double lid=127.6+.7*u*u;
-   double coverage=Math.Max(0,1-Math.Abs(sy-lid)/.85)*Math.Max(0,1-Math.Pow(Math.Abs(u),4));
+   double halfWidth=2.8*Math.Sqrt(Math.Max(0,1-u*u));
+   double coverage=Math.Max(0,Math.Min(1,(halfWidth-Math.Abs(sy-lid))/.8));
    double lash=128.1+(sx-867)*.7;
-   if(sx>=866.5&&sx<=868.2)coverage=Math.Max(coverage,Math.Max(0,1-Math.Abs(sy-lash)/.65)*.8);
+   if(sx>=866.5&&sx<=868.2)coverage=Math.Max(coverage,Math.Max(0,1-Math.Abs(sy-lash)/1.0));
    int column=(int)Math.Round(x);
    if(column<0||column>=top.Length||top[column]<0||y<top[column]+.25)return pixel;
-   coverage*=Math.Min(1,(closure-.55)/.45)*.90;
-   uint alpha=pixel>>24,result=alpha<<24;int[] ink={39,38,49};
+   coverage*=Math.Min(1,(closure-.55)/.45);
+   uint alpha=pixel>>24,result=alpha<<24;int[] ink={18,16,21};
    for(int c=0;c<3;c++)result|=(uint)Math.Round(((pixel>>(c*8))&255)*(1-coverage)+ink[c]*alpha/255.0*coverage)<<(c*8);
    return result;
   }
