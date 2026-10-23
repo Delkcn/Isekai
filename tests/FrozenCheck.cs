@@ -1,0 +1,13 @@
+﻿using System;using System.Reflection;using System.IO;using System.Drawing;using JouchoPet;
+class FrozenCheck {
+ static int count;
+ static void Main(){try{HairLength.Enabled=true;var old=Assembly.LoadFile(Path.GetFullPath("qa/v0706/baseline/IsekaijouchoPet.exe"));var flags=BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Instance;old.GetType("JouchoPet.AnimationParameters").GetMethod("UseFixedValues",BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Static).Invoke(null,null);AnimationParameters.UseFixedValues();
+ foreach(int size in new[]{220,300,400}){var rt=old.GetType("JouchoPet.PetRenderer");var ft=old.GetType("JouchoPet.RenderFrame");var prior=Activator.CreateInstance(rt,true);rt.GetMethod("Resize",flags).Invoke(prior,new object[]{size});using(var current=new PetRenderer()){current.Resize(size);foreach(string kind in new[]{"sleep","walk","run","wave","turn","carry","idle","archery","leap"})for(int k=0;k<=10;k++){
+ var f=new RenderFrame{Time=k*.13,MotionState="idle",Settle=1};double t=k/10.0;
+ if(kind=="sleep"){f.RestAmount=t;f.ClosedEyes=t;}if(kind=="walk"||kind=="run"||kind=="carry"){f.Facing=k%2==0?-1:1;f.MotionState="walk";f.Gait=t*6;f.Speed=36;f.RunBlend=kind=="run"?1:0;f.Carry=kind=="carry"?1:0;}if(kind=="wave"){f.Greeting=1;f.WavePhase=t;f.WaveBlend=1;}if(kind=="turn"){f.MotionState="turn";f.Angle=-1+2*t;}if(kind=="archery"){f.Archery=true;f.BowPose=ArcheryMotion.At(t*4.85,k%2==0?-1:1);}
+ if(kind=="leap"){f.Leaping=true;f.Facing=k%2==0?-1:1;f.Leap=LeapMotion.At(t*1.9,k%2==0?-1:1);}
+ object of=Activator.CreateInstance(ft);foreach(var field in typeof(RenderFrame).GetFields(flags)){object value=field.GetValue(f);var target=ft.GetField(field.Name,flags);if(field.FieldType.IsValueType&&!field.FieldType.IsPrimitive&&!field.FieldType.IsEnum){object nested=Activator.CreateInstance(target.FieldType);foreach(var sub in field.FieldType.GetFields(flags)){target.FieldType.GetField(sub.Name,flags).SetValue(nested,sub.GetValue(value));}value=nested;}target.SetValue(of,value);}
+ var a=PoseMesh.Read((Bitmap)rt.GetMethod("Draw",flags).Invoke(prior,new[]{of}));var b=PoseMesh.Read(current.Draw(f));if(a.Length!=b.Length)throw new Exception("size mismatch");for(int i=0;i<a.Length;i++)if(a[i]!=b[i])throw new Exception("Frozen render changed / "+kind+" / "+size+" / "+k);count++;
+ }}((IDisposable)prior).Dispose();Console.WriteLine("PASS frozen rendered poses at "+size);}
+ Console.WriteLine("All "+count+" frozen frame comparisons are pixel-identical to 0.7.5 including the current global hair binding.");}catch(Exception e){Console.WriteLine(e);Environment.ExitCode=1;}}
+}

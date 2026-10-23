@@ -1,0 +1,116 @@
+using System;
+using System.Drawing;
+using System.Windows.Forms;
+namespace JouchoPet
+{
+    sealed partial class Pet
+    {
+        static double Ease(double current,double target,double rate,double dt)
+        {
+            return current+(target-current)*(1-Math.Exp(-rate*dt));
+        }
+        void Animate(object sender, EventArgs e)
+        {
+            double nowSeconds=clock.Elapsed.TotalSeconds;
+            double dt=Math.Min(0.05,Math.Max(0,nowSeconds-previousTime));
+            previousTime=nowSeconds;
+            elapsed=nowSeconds;
+            DateTime now=DateTime.UtcNow;
+            bool happy=now<happyUntil;
+            if(!CarryActive)carryAmount=Ease(carryAmount,0,10,dt);
+            int carryDesired=0;
+            try { if(!leap.Busy && !archery.Busy && !sword.Busy)carryDesired=CarryDesired(dt); } catch(Exception ex) { CarryError(ex); }
+            if(leap.Busy)carryEffort=Ease(carryEffort,0,8,dt);
+            if(!CarryActive) {
+                if(carryAmount<.001)carryAmount=0;
+                if(carryEffort<.001)carryEffort=0;
+            }
+            if(!CarryActive && !leap.Busy && !archery.Busy && !sword.Busy && !dragging && !menuOpen)
+            {
+                if(!sleeping && (now-lastInput).TotalMinutes>=5) SetSleep(true);
+                if(!sleeping && !happy && !rest.BlocksWalking && wandering && now>=stateUntil)
+                {
+                    walking=!walking;
+                    running=false;
+                    direction=random.Next(2)==0?-1:1;
+                    stateUntil=now.AddSeconds(walking?random.Next(4,9):random.Next(5,11));
+                }
+            }
+            // Claim an already planted pose before ordinary locomotion can add
+            // a needless brake/settle cycle to the sword request.
+            BeginSwordIfReady();
+            int desired=walking && wandering && !sleeping && !happy && !rest.BlocksWalking && !greeting.Active && !dragging && !menuOpen?direction:0;
+            if(CarryActive)desired=menuOpen?0:carryDesired;
+            if(archery.Busy)desired=archery.ApproachDirection(motion,!menuOpen && !rest.BlocksWalking && !greeting.Active);
+            if(sword.Busy)desired=sword.ApproachDirection(motion,!menuOpen && !rest.BlocksWalking && !greeting.Active);
+            if(leap.Pending)desired=leap.ApproachDirection(motion,!menuOpen && !rest.BlocksWalking && !greeting.Active);
+            double travel=sword.Active || (sword.Busy && menuOpen) || archery.Active || (archery.Busy && menuOpen) || leap.Active || CarryApproachAir || (CarryActive && (menuOpen || carryPhase=="push" || carryPhase=="runpickup"))?0:
+                motion.Update(dt,desired,petHeight,(CarryActive && !CarryRunApproach) || leap.Pending || archery.Pending || sword.Pending,CarryRunApproach || (running && !CarryActive && !leap.Busy));
+            rest.Update(dt, motion.State=="idle" && motion.Facing==0);
+            greeting.Update(menuOpen?0:dt,motion.State=="idle" && motion.Facing==0 && rest.Sleep<.025);
+            greetingWaveBlend=Ease(greetingWaveBlend,greetingWaves?1:0,9,menuOpen?0:dt);
+            speed=motion.Speed;
+            gait=motion.Phase;
+            walkBlend=Ease(walkBlend,Math.Min(1,Math.Abs(speed)/36),5,dt);
+            if(!dragging && Math.Abs(travel)>0)
+            {
+                moveRemainder+=travel;
+                int delta=(int)moveRemainder;
+                moveRemainder-=delta;
+                Rectangle a=Screen.FromControl(this).WorkingArea;
+                int next=Left+delta;
+                if(next<a.Left || next+Width>a.Right)
+                {
+                    direction=-direction;
+                    motion.Boundary();
+                    moveRemainder=0;
+                }
+                Left=Math.Max(a.Left,Math.Min(next,a.Right-Width));
+            }
+            else if(motion.State=="turn" || motion.State=="idle") moveRemainder=0;
+            UpdateLeap(dt);
+            UpdateArchery(dt);
+            UpdateSword(dt);
+            try { CarryAfterMove(dt); } catch(Exception ex) { CarryError(ex); }
+            // CarryAfterMove synchronizes the gait with the accepted icon path.
+            speed=motion.Speed;gait=motion.Phase;
+            Point cursor=Cursor.Position;
+            double tx=Math.Max(-1,Math.Min(1,(cursor.X-(Left+Width/2))/350.0));
+            double ty=Math.Max(-1,Math.Min(1,(cursor.Y-(Top+Height/3))/350.0));
+            lookX=Ease(lookX,sleeping?0:tx*0.30,2,dt);
+            lookY=Ease(lookY,sleeping?0:ty*0.25,2,dt);
+            if(!dragging) dragLean=Ease(dragLean,0,6,dt);
+            lean=Ease(lean,dragging?dragLean:walkBlend*direction*0.35,5,dt);
+            if(elapsed>=nextBlink)
+            {
+                blinkStart=elapsed;
+                nextBlink=elapsed+2.6+random.NextDouble()*3.6;
+            }
+            double blinkAge=elapsed-blinkStart;
+            blink=blinkAge>=0 && blinkAge<0.19 ? Math.Sin(Math.PI*blinkAge/0.19):0;
+            // Rendering uses registered anatomical meshes, not optical flow.
+            double renderStart=clock.Elapsed.TotalSeconds;
+            Render();
+            frameStatistics.Record(nowSeconds,(clock.Elapsed.TotalSeconds-renderStart)*1000);
+        }
+        void Render()
+        {
+            if(!IsHandleCreated || IsDisposed || !renderer.Ready) return;
+            if(sword.Active){RenderSword();return;}
+            RenderFrame frame=new RenderFrame
+            {
+                Time=elapsed, Gait=gait, Speed=speed, MotionState=motion.State, Facing=motion.Facing, Angle=motion.Angle, Settle=motion.Settle, Dragging=dragging,
+                LookX=lookX, LookY=lookY, Lean=lean, Blink=blink,
+                RestAmount=rest.Sleep, Affection=rest.Affection, ClosedEyes=rest.Eyes,
+                Nod=rest.Nod, PatSide=rest.Side, Carry=carryAmount, CarryEffort=carryEffort, CarryVertical=carryVertical,
+                Greeting=greeting.Amount,WavePhase=greeting.Phase,WaveBlend=greetingWaveBlend,RunBlend=motion.RunBlend,
+                Leaping=leap.Active || CarryLeapActive || CarryApproachAir,Leap=CarryApproachAir?carryApproachLeap.Pose(carryAge):CarryLeapActive?carryTravel.At(carryAge).Leap:leap.Pose,RunningCarry=CarryRunActive,
+                LightTurn=motion.LightTurn,TurnProgress=motion.TurnProgress,TurnFrom=motion.TurnFrom,SupportNear=motion.SupportNear,
+                Archery=archery.Active,BowPose=archery.Pose
+            };
+            Native.Present(Handle,RenderMagic(renderer.Draw(frame)),Left,Top);
+
+            FollowSpeech();
+        }
+    }
+}

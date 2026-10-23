@@ -1,0 +1,13 @@
+PASS 0.7.5 pose curves, blade binding and grip preserved under the new timeline
+PASS highest pose held for 0.10s while sword opacity advances from zero to full
+PASS HitFrame shifted to 0.60s once at 30/60/120fps; animation ends at 1.13s
+Eye / 220 / pat darkened lash pixels=2 new=0 changed=2
+Eye / 220 / wave darkened lash pixels=3 new=0 changed=3
+Eye / 300 / pat darkened lash pixels=4 new=0 changed=4
+Eye / 300 / wave darkened lash pixels=4 new=0 changed=5
+Eye / 400 / pat darkened lash pixels=7 new=0 changed=9
+Eye / 400 / wave darkened lash pixels=6 new=0 changed=6
+PASS pat and wave add visible dark lashes without new red pixels at 220/300/400; changes confined to that eye
+PASS eye closure is monotone, neutral is exact, upper fringe stays fixed
+PASS idle, ordinary blink and two frozen rest samples are pixel-identical to 0.7.12
+All 6 selected checks passed.
