@@ -1,0 +1,2 @@
+PASS native journey preview above: one request, run, stop, cast and one hit
+PASS native journey preview below: one request, run, stop, cast and one hit

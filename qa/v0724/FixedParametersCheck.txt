@@ -1,0 +1,12 @@
+PASS 23 approved values unchanged; requested run speed is 150 percent
+PASS application startup restores approved values without importing a file
+PASS application lock rejects live parameter edits
+PASS application lock rejects preset replacement
+PASS application lock rejects import before opening a settings file
+PASS application lock rejects export before creating a settings file
+PASS blocked editor calls created no file
+PASS legacy load/reset cannot change fixed application values
+PASS returned snapshots cannot mutate fixed application values
+PASS shipped Pet has no debug window instance or opening action
+PASS user settings file remains byte-identical
+All 11 fixed-parameter checks passed.

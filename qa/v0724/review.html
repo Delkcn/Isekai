@@ -1,0 +1,22 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>0.7.24 · 跑位后施法</title>
+<style>body{margin:0;background:#151c28;color:#e6edf7;font:15px/1.65 system-ui,"Microsoft YaHei",sans-serif}main{max-width:1060px;margin:auto;padding:24px}h1{font-size:26px;font-weight:600}p{color:#b7c7da}.controls{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:16px 0}button,select{font:inherit;background:#29384a;color:#e6edf7;border:1px solid #52667b;border-radius:6px;padding:7px 12px}canvas{display:block;margin:auto;width:min(100%,750px);height:auto;background:#232b38;border:1px solid #405166;border-radius:8px}input[type=range]{width:min(65vw,600px)}img{width:100%;height:auto;background:#232b38}details{margin:20px 0}summary{cursor:pointer}a{color:#a6e6ff}.note{border-left:3px solid #94dcef;padding:12px 16px;background:#202d3d}.small{font-size:13px}</style>
+<main><h1>跑到合适位置，再施法</h1><p>0.7.24-preview · 跑步速度为原来的 150%：300 px 人物尺寸时从 132 增至 198 px/s，步频同步联动。复用原有刹停、转身和双手施法。文件在上下方、当前角度过陡时，会先跑到屏幕内适合施法的位置，站稳后自动继续同一次请求。</p>
+<div class="controls"><label>目标 <select id="scenario"><option value="above">人物上方</option><option value="below">人物下方</option></select></label><label>速度 <select id="speed"><option value="1">正常</option><option value=".25">¼ 慢放</option></select></label><button id="play">暂停</button><button id="restart">从头播放</button></div>
+<canvas id="view" width="600" height="540"></canvas>
+<div class="controls"><input id="seek" aria-label="逐帧检查" type="range" min="0" max="179" value="0"><span id="stamp"></span></div>
+<div class="controls"><button data-phase="run">跑动</button><button data-phase="face target">站稳并朝向目标</button><button data-phase="charge">蓄力</button><button data-phase="push">推送</button><button data-phase="hit">命中</button></div>
+<p class="small">以上是实际 Pet 协调逻辑、Motion 状态机和项目渲染器产生的 15 fps 取样，模拟按 60 fps 推进。人物为 300 px、预览缩放为 64%；demo.txt 为固定的测试图标，不操作真实文件。画面左上角 hits 是该请求的累计命中次数。</p>
+<p class="note">右键 → 双手施法 · 魔法弹 → 选择桌面文件并施法。若原地角度已合适，直接转向施法；需要调整时自动跑位。选择过程不改变文件位置；目标移动或消失会取消。仅在当前屏幕同一高度横向找站位，不跨屏、不跳跃；没有合适位置时会提示。</p>
+<details open><summary>上 / 下方目标：跑动 → 蓄力 → 命中</summary><img src="journey-review.png" alt="两种目标高度的完整衔接"></details>
+<details><summary>原有无特效五姿势（沿用 0.7.22，骨骼与特效参数未变）</summary><img src="cast-300-right-poses.png" alt="右向无特效姿势"><img src="cast-300-left-poses.png" alt="左向无特效姿势"></details>
+<p><a href="FocusedCheck.txt">4 组聚焦检查</a> · <a href="FixedParametersCheck.txt">参数固定验证</a> · <a href="JourneyCheck.txt">完整过程验证</a> · <a href="validation.md">修改与限制</a> · <a href="agent-interface.md">动作接口</a></p>
+<p class="small">文件中心、双手方向、24° 头部范围和上版启动优化保持。尚未在混合 DPI 多屏硬件上验收；动作观感仍供人工确认。</p></main>
+<script>
+const canvas=document.getElementById('view'),ctx=canvas.getContext('2d'),scenario=document.getElementById('scenario'),speed=document.getElementById('speed'),play=document.getElementById('play'),seek=document.getElementById('seek'),stamp=document.getElementById('stamp');
+const guide={"above": {"run": 18, "face target": 64, "charge": 76, "push": 91, "hit": 98}, "below": {"run": 4, "face target": 47, "charge": 59, "push": 74, "hit": 80}};let image=null,frame=0,playing=true,last=0,token=0;
+function load(){let key=++token,im=new Image();image=null;stamp.textContent='加载…';im.onload=()=>{if(key===token)image=im};im.onerror=()=>stamp.textContent='找不到预览';im.src=`journey-${scenario.value}.png`;frame=0;}
+scenario.onchange=load;play.onclick=()=>{playing=!playing;play.textContent=playing?'暂停':'播放'};
+function stop(f){frame=f;playing=false;play.textContent='播放'}seek.oninput=()=>stop(+seek.value);document.querySelectorAll('[data-phase]').forEach(b=>b.onclick=()=>stop(guide[scenario.value][b.dataset.phase]));
+document.getElementById('restart').onclick=()=>{frame=0;playing=true;play.textContent='暂停'};
+function tick(now){if(last&&playing&&image)frame=(frame+Math.min(100,now-last)*.015*+speed.value)%180;last=now;let f=Math.floor(frame);if(image){ctx.clearRect(0,0,600,540);ctx.drawImage(image,f%6*600,Math.floor(f/6)*540,600,540,0,0,600,540);seek.value=f;stamp.textContent=(f/15).toFixed(2)+' s';}requestAnimationFrame(tick)}load();requestAnimationFrame(tick);
+</script></html>

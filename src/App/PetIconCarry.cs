@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Collections.Generic;
 using System.Windows.Forms;
@@ -78,7 +78,7 @@ namespace JouchoPet
             menu.Items.Add(carryStatus);menu.Items.Add(new ToolStripSeparator());
         }
         void RequestPush(Point axis,bool running=false) {
-            CancelSword();CancelArchery();
+            CancelCast();CancelSword();CancelArchery();
             CancelLeap();
             if(!carryEnabled){MessageBox.Show("请先开启“允许搬动桌面图标”。");return;}
             if(CarryActive)CancelCarry("切换推动方向");

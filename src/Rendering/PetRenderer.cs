@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 
 namespace JouchoPet
@@ -33,6 +33,13 @@ namespace JouchoPet
         RestRig rest;
         ArcheryRig archer;
         SwordRig swordsman;
+        CastingRig caster;
+        internal int CastPadding{get{return caster.Padding;}}
+        internal Bitmap DrawCast(CastPose p,bool effects=true){return caster.Draw(p,effects);}
+        internal bool ResolveCastAim(PointF target,int facing,out double aim){return caster.ResolveAim(target,facing,out aim);}
+        internal double CastLookAim(PointF target,int facing){return caster.LookAim(target,facing);}
+        internal PointF CastCore(CastPose p){return caster.Core(p);}
+        internal SlashSkeleton.Pose CastBones(CastPose p){return caster.Sample(p);}
         internal int SwordPadding {get{return swordsman.Padding;}}
         internal Bitmap DrawSword(SwordPose pose,bool effects=true){return swordsman.Draw(pose,effects);}
         public double LastArcheryJacobian {get{return archer==null?1:archer.MinimumArea;}}
@@ -57,6 +64,7 @@ namespace JouchoPet
             RestRig newRest = null;
             ArcheryRig newArcher = null;
             SwordRig newSword = null;
+            CastingRig newCaster = null;
             try
             {
                 newFront = new SoftRig(sprites, canvas.Width, canvas.Height, petHeight);
@@ -66,6 +74,7 @@ namespace JouchoPet
                 newTurn.Prepare(newFront.Draw(0, 0, 0, 0, 0, 0, 0, NeutralPose), newSide);
                 newArcher = new ArcheryRig(canvas.Width,canvas.Height,petHeight,newSide);
                 newSword = new SwordRig(canvas.Width,canvas.Height,petHeight,newSide);
+                newCaster = new CastingRig(canvas.Width,canvas.Height,petHeight,newSide);
             }
             catch
             {
@@ -75,10 +84,11 @@ namespace JouchoPet
                 if (newRest != null) newRest.Dispose();
                 if (newArcher != null) newArcher.Dispose();
                 if (newSword != null) newSword.Dispose();
+                if (newCaster != null) newCaster.Dispose();
                 throw;
             }
             DisposeRigs();
-            swordsman=newSword;
+            swordsman=newSword;caster=newCaster;
             front = newFront;
             side = newSide;
             turn = newTurn;
@@ -119,6 +129,7 @@ namespace JouchoPet
 
         void DisposeRigs()
         {
+            if (caster != null){caster.Dispose();caster=null;}
             if (front != null) front.Dispose();
             if (side != null) side.Dispose();
             if (turn != null) turn.Dispose();

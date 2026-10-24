@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Text;
 namespace JouchoPet {
  // Move the displayed list-view item itself, not a deferred Shell layout request.
- // The only remote memory accessed is our own eight-byte POINT allocation.
+ // The only remote memory accessed is our own sixteen-byte POINT/RECT allocation.
  sealed class DesktopIconView : IDisposable {
   readonly IntPtr window;
   IntPtr process,point;
@@ -31,14 +31,14 @@ namespace JouchoPet {
    uint pid;GetWindowThreadProcessId(window,out pid);
    process=OpenProcess(0x38,false,pid);
    if(process==IntPtr.Zero)throw new Win32Exception(Marshal.GetLastWin32Error(),"无法访问桌面图标位置缓冲区。");
-   point=VirtualAllocEx(process,IntPtr.Zero,new UIntPtr(8),0x3000,4);
+   point=VirtualAllocEx(process,IntPtr.Zero,new UIntPtr(16),0x3000,4);
    if(point==IntPtr.Zero){Dispose();throw new Win32Exception(Marshal.GetLastWin32Error());}
   }
   IntPtr Send(uint message,int index,IntPtr parameter) {
    IntPtr result;
    if(SendMessageTimeout(window,message,new IntPtr(index),parameter,3,500,out result)==IntPtr.Zero) {
     // A timed-out receiver might still use the POINT; do not free it underneath
-    // Explorer. At most eight bytes remain until that process exits.
+    // Explorer. At most sixteen bytes remain until that process exits.
     uncertain=true;throw new InvalidOperationException("桌面图标控件响应超时，推动已暂停。");
    }
    return result;
@@ -52,6 +52,16 @@ namespace JouchoPet {
    byte[] bytes=new byte[8];UIntPtr read;
    if(!ReadProcessMemory(process,point,bytes,new UIntPtr(8),out read) || read.ToUInt64()!=8)throw new Win32Exception(Marshal.GetLastWin32Error());
    return new Point(BitConverter.ToInt32(bytes,0),BitConverter.ToInt32(bytes,4));
+  }
+  // LVM_GETITEMRECT / LVIR_ICON: actual icon bounds, excluding its label.
+  // The only written bytes belong to our scratch buffer, never to an item.
+  internal Rectangle IconRectangle(int index){
+   byte[] bytes=new byte[16];Array.Copy(BitConverter.GetBytes(1),bytes,4);UIntPtr written,read;
+   if(!WriteProcessMemory(process,point,bytes,new UIntPtr(16),out written)||written.ToUInt64()!=16)throw new Win32Exception(Marshal.GetLastWin32Error());
+   if(Send(0x100E,index,point)==IntPtr.Zero)throw new InvalidOperationException("无法读取桌面图标边界。");
+   if(!ReadProcessMemory(process,point,bytes,new UIntPtr(16),out read)||read.ToUInt64()!=16)throw new Win32Exception(Marshal.GetLastWin32Error());
+   var rect=Rectangle.FromLTRB(BitConverter.ToInt32(bytes,0),BitConverter.ToInt32(bytes,4),BitConverter.ToInt32(bytes,8),BitConverter.ToInt32(bytes,12));
+   if(rect.Width<=0||rect.Height<=0)throw new InvalidOperationException("桌面图标边界无效。");return rect;
   }
   public Point Move(int index,Point expected,Point target) {
    if(Read(index)!=expected)throw new InvalidOperationException("图标显示位置被外部修改，推动已暂停。");

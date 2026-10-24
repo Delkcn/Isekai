@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
 namespace JouchoPet {
  sealed partial class Pet {
   readonly LeapMotion leap=new LeapMotion();
   void StartLeap(int vertical) {
-   CancelSword();CancelArchery();
+   CancelCast();CancelSword();CancelArchery();
    CancelLeap();SetSleep(false);greeting.Cancel();walking=false;running=false;
    leap.Request(vertical,motion.Facing==0?direction:motion.Facing);
    stateUntil=DateTime.UtcNow.AddSeconds(6);

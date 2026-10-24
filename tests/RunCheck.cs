@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -19,7 +19,7 @@ class RunCheck {
    }
    Check(handoff,"run starts from front "+label);
    Advance(m,3,direction,size,true);
-   Check(Math.Abs(m.Speed-direction*132.0*size/300)<.02 && m.RunBlend>.999,"run reaches intended pace "+label);
+   Check(Math.Abs(m.Speed-direction*198.0*size/300)<.02 && m.RunBlend>.999,"run reaches intended pace "+label);
    double phase=m.Phase;
    Advance(m,2,direction,size,false);
    Check(Math.Abs(m.Speed-direction*36)<.1 && m.RunBlend==0 && m.Phase>phase,"run smoothly returns to exact ordinary walk mode "+label);

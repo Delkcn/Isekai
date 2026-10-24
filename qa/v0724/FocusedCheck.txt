@@ -1,0 +1,18 @@
+PASS both directions / three sizes: running speed equals 150 percent of 0.7.23; 198px/s at 300px size
+PASS walking remains 36px/s; run step phase follows travel and planted feet remain grounded
+Approach 30fps initialFacing=-1 targetHeight=-1 moved=247 hit=1 pass=True
+Approach 30fps initialFacing=-1 targetHeight=1 moved=247 hit=1 pass=True
+Approach 30fps initialFacing=1 targetHeight=-1 moved=247 hit=1 pass=True
+Approach 30fps initialFacing=1 targetHeight=1 moved=234 hit=1 pass=True
+Approach 60fps initialFacing=-1 targetHeight=-1 moved=243 hit=1 pass=True
+Approach 60fps initialFacing=-1 targetHeight=1 moved=243 hit=1 pass=True
+Approach 60fps initialFacing=1 targetHeight=-1 moved=243 hit=1 pass=True
+Approach 60fps initialFacing=1 targetHeight=1 moved=230 hit=1 pass=True
+Approach 120fps initialFacing=-1 targetHeight=-1 moved=242 hit=1 pass=True
+Approach 120fps initialFacing=-1 targetHeight=1 moved=242 hit=1 pass=True
+Approach 120fps initialFacing=1 targetHeight=-1 moved=242 hit=1 pass=True
+Approach 120fps initialFacing=1 targetHeight=1 moved=230 hit=1 pass=True
+Maximum approach run blend=1.000
+PASS above/below files: run to a usable position, brake, face target, cast and hit once at 30/60/120fps without a second request
+PASS approach respects screen edges, menu pause, target loss and cancellation; no motion during casting; negative coordinates and no-space plan covered
+Completed 4 focused check groups.

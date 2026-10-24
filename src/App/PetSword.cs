@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
 namespace JouchoPet {
@@ -19,7 +19,7 @@ namespace JouchoPet {
   public void SwordSlash(PointF targetPosition,int facingDirection){
    if(InvokeRequired)throw new InvalidOperationException("SwordSlash must be dispatched on the desktop UI thread.");
    if(float.IsNaN(targetPosition.X)||float.IsInfinity(targetPosition.X)||float.IsNaN(targetPosition.Y)||float.IsInfinity(targetPosition.Y))throw new ArgumentException("Target must be finite.");
-   CancelSword();CancelArchery();CancelLeap();CancelCarry();greeting.Cancel();rest.RequestSleep(false);sleeping=false;sleepItem.Checked=false;walking=running=false;happyUntil=DateTime.MinValue;lastInput=DateTime.UtcNow;
+   CancelCast();CancelSword();CancelArchery();CancelLeap();CancelCarry();greeting.Cancel();rest.RequestSleep(false);sleeping=false;sleepItem.Checked=false;walking=running=false;happyUntil=DateTime.MinValue;lastInput=DateTime.UtcNow;
    sword.SwordSlash(targetPosition,facingDirection);
   }
   void CancelSword(){if(sword!=null)sword.Cancel();if(swordOverlay!=null)swordOverlay.Hide();}

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Web.Script.Serialization;
@@ -10,12 +10,12 @@ namespace JouchoPet {
    Key=key;Group=group;Label=label;Unit=unit;Default=value;Min=min;Max=max;Step=step;Hint=hint;
   }
  }
- // These are the user's approved 24 values, fixed in the shipped app as of 0.6.38.
+ // These are the user's approved 24 values, fixed in the shipped app; run speed updated by request in 0.7.24.
  // The old editor/import helpers remain for internal animation regression tools only.
  // Pet calls UseFixedValues before creating any renderer; it never loads user JSON.
  static class AnimationParameters {
   public static readonly AnimationParameter[] Specs={
-   new AnimationParameter("runSpeed","小跑","移动速度","像素/秒",132,60,180,2,"以角色高度 300 像素为基准；步频随移动速度联动。"),
+   new AnimationParameter("runSpeed","小跑","移动速度","像素/秒",198,60,270,2,"以角色高度 300 像素为基准；步频随移动速度联动。"),
    new AnimationParameter("stride","小跑","步幅","% 身高",19,15,23,.5,"步幅越短，相同移动速度下步频越快。"),
    new AnimationParameter("footLift","小跑","抬脚高度","% 身高",6.8,6,12,.5,"只影响小跑的摆腿阶段。"),
    new AnimationParameter("bodyRise","小跑","身体起伏","% 身高",2.5,0,2.5,.1,"腾起时身体上下运动的幅度。"),

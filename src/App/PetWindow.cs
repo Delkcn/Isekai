@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.IO;
 using System.Diagnostics;
@@ -54,7 +54,7 @@ namespace JouchoPet
             Location = new Point(area.Right - Width - 35, area.Bottom - Height);
             wanderItem = new ToolStripMenuItem("Walk around", null, delegate
             {
-                CancelSword();CancelLeap();wandering = !wandering; walking = false; wanderItem.Checked = wandering; SaveSettings();
+                CancelCast();CancelSword();CancelLeap();wandering = !wandering; walking = false; wanderItem.Checked = wandering; SaveSettings();
             });
             wanderItem.Checked = wandering;
             sleepItem = new ToolStripMenuItem("Sleep / wake", null, delegate
@@ -95,7 +95,7 @@ namespace JouchoPet
             menu.Items.Add("向右小跑",null,delegate{StartWalk(1,true);});
             menu.Items.Add("向上轻跃",null,delegate{StartLeap(-1);});
             menu.Items.Add("向下轻落",null,delegate{StartLeap(1);});
-            AddArcheryMenu();AddSwordMenu();
+            AddArcheryMenu();AddSwordMenu();AddCastingMenu();
             AddCarryMenu();
             menu.Items.Add(wanderItem);
             menu.Items.Add(sleepItem);
@@ -180,7 +180,7 @@ namespace JouchoPet
             };
             FormClosed += delegate
             {
-                CancelSword();CancelArchery();if(magicOverlay!=null)magicOverlay.Dispose();if(swordOverlay!=null)swordOverlay.Dispose();
+                CancelCast();CancelSword();CancelArchery();if(magicOverlay!=null)magicOverlay.Dispose();if(swordOverlay!=null)swordOverlay.Dispose();if(castBodyOverlay!=null)castBodyOverlay.Dispose();if(castFlightOverlay!=null)castFlightOverlay.Dispose();
                 CancelCarry();
                 if(chat!=null)chat.Close();
                 if(bubble!=null)bubble.Dispose();
@@ -212,14 +212,14 @@ namespace JouchoPet
         }
         void ResizePet()
         {
-            CancelSword();CancelArchery();
+            CancelCast();CancelSword();CancelArchery();
             CancelLeap();
             ClientSize=PetRenderer.CanvasSize(petHeight);
             renderer.Resize(petHeight);
         }
         void RestorePet()
         {
-            CancelSword();CancelArchery();
+            CancelCast();CancelSword();CancelArchery();
             CancelLeap();
             CancelCarry();
             Show();

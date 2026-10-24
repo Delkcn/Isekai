@@ -27,6 +27,8 @@ namespace JouchoPet {
    RigParts.Segment(g,legs[part,2],skeleton.BindAnkle(part),skeleton.BindFoot(part),p.Ankle,p.Foot);
   }
   internal void Draw(Graphics g,SwordPose p,SlashSkeleton.Pose bones){Leg(g,0,bones.Far);Leg(g,1,bones.Near);g.DrawImageUnscaled(skin.Draw(torso,v=>skeleton.SkinBody(v,p)),0,0);}
+  // Optional local pose correction; the established sword path stays unchanged.
+  internal void DrawAdjusted(Graphics g,SwordPose p,SlashSkeleton.Pose bones,Func<PointF,PointF> adjust){Leg(g,0,bones.Far);Leg(g,1,bones.Near);g.DrawImageUnscaled(skin.Draw(torso,v=>skeleton.SkinBody(adjust(v),p)),0,0);}
   public void Dispose(){skin.Dispose();foreach(var patch in legs)patch.Dispose();}
  }
 }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Reflection;
@@ -76,6 +76,16 @@ namespace JouchoPet
             return result;
         }
         public Point ScreenPoint(Point p) { XY xy=new XY(p);if(!ClientToScreen(hwnd,ref xy))throw new InvalidOperationException("桌面坐标转换失败。");return xy.Point; }
+        internal Rectangle IconScreenRectangle(Item item){
+            IntPtr list=DesktopIconView.Find(hwnd);
+            if(list==IntPtr.Zero)throw new InvalidOperationException("当前桌面不提供可读取的图标边界。");
+            using(var reader=new DesktopIconView(list)){
+                if(item.Index<0||item.Index>=reader.Count||reader.Read(item.Index)!=item.Position)throw new InvalidOperationException("图标位置已改变，请重新选择文件。");
+                Rectangle r=reader.IconRectangle(item.Index);XY a=new XY(r.Location),b=new XY(new Point(r.Right,r.Bottom));
+                if(!ClientToScreen(list,ref a)||!ClientToScreen(list,ref b))throw new InvalidOperationException("图标屏幕边界转换失败。");
+                return Rectangle.FromLTRB(a.X,a.Y,b.X,b.Y);
+            }
+        }
         internal class PositionFailure : Exception {
             public readonly Point Actual;
             public PositionFailure(Point actual,string message,Exception inner=null):base(message,inner){Actual=actual;}

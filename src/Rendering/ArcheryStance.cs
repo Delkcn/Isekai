@@ -50,11 +50,12 @@ namespace JouchoPet {
   Bitmap Torso(int d) {
    using(var source=CharacterArt.Load(d==0?"profile-left":"profile-right"))using(var path=new GraphicsPath()) {
     var definition=(CharacterArt.Pose)source.Tag;path.AddPolygon(LegBoundary[d]);
+    RectangleF legBounds=path.GetBounds();legBounds.Inflate(1,1);
     var pixels=Read(source);
     for(int y=0;y<source.Height;y++)for(int x=0;x<source.Width;x++) {
      int gx=x+definition.Cell.X,gy=y+definition.Cell.Y;
      bool boot=gy>395 && gx>=(d==0?95:1560) && gx<=(d==0?220:1675);
-     if(path.IsVisible(gx,gy)||boot)pixels[y*source.Width+x]=0;
+     if(boot||(legBounds.Contains(gx,gy)&&path.IsVisible(gx,gy)))pixels[y*source.Width+x]=0;
     }
     using(var isolated=RigParts.BitmapOf(pixels,source.Width,source.Height)){isolated.Tag=definition;return CharacterArt.Normalize(isolated,width,height,size);}
    }

@@ -22,13 +22,14 @@ namespace JouchoPet {
    try {
     for(int d=0;d<2;d++)using(Bitmap source=CharacterArt.Load(d==0?"profile-left":"profile-right"))using(var path=new GraphicsPath()) {
      var pose=(CharacterArt.Pose)source.Tag;path.AddPolygon(LegBoundary[d]);
+     RectangleF legBounds=path.GetBounds();legBounds.Inflate(1,1);
      int sw=source.Width,sh=source.Height;int[] all=new int[sw*sh];var data=source.LockBits(new Rectangle(0,0,sw,sh),ImageLockMode.ReadOnly,PixelFormat.Format32bppArgb);
      try{for(int y=0;y<sh;y++)Marshal.Copy(IntPtr.Add(data.Scan0,y*data.Stride),all,y*sw,sw);}finally{source.UnlockBits(data);}
      var pixels=new[]{new int[all.Length],new int[all.Length],new int[all.Length]};
      for(int y=0;y<sh;y++)for(int x=0;x<sw;x++) {
       int gx=x+pose.Cell.X,gy=y+pose.Cell.Y,part=0;
       bool lowerBoot=gy>395 && gx>=(d==0?95:1560) && gx<=(d==0?220:1675);
-      if(path.IsVisible(gx,gy)||lowerBoot)part=(d==0?gx<176-(gy-350)*.10:gx>=1621)?2:1;
+      if(lowerBoot||(legBounds.Contains(gx,gy)&&path.IsVisible(gx,gy)))part=(d==0?gx<176-(gy-350)*.10:gx>=1621)?2:1;
       pixels[part][y*sw+x]=all[y*sw+x];
      }
      for(int part=0;part<1;part++)using(var isolated=new Bitmap(sw,sh,PixelFormat.Format32bppArgb)) {

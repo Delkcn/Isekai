@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
 namespace JouchoPet
@@ -18,7 +18,7 @@ namespace JouchoPet
         }
         void HeadPat()
         {
-            CancelSword();CancelArchery();
+            CancelCast();CancelSword();CancelArchery();
             CancelLeap();
             greeting.Cancel();
             CancelCarry();
@@ -33,7 +33,7 @@ namespace JouchoPet
         }
         void SetSleep(bool value)
         {
-            CancelSword();CancelArchery();
+            CancelCast();CancelSword();CancelArchery();
             CancelLeap();
             bool changed=sleeping!=value;
             greeting.Cancel();
@@ -48,7 +48,7 @@ namespace JouchoPet
             Render();
         }
         void Greet(bool wave=false) {
-            CancelSword();CancelArchery();
+            CancelCast();CancelSword();CancelArchery();
             CancelLeap();
             greetingWaves=wave;
             CancelCarry();rest.RequestSleep(false);sleeping=false;sleepItem.Checked=false;walking=false;
@@ -64,7 +64,7 @@ namespace JouchoPet
                 return;
             }
             if(e.Button!=MouseButtons.Left) return;
-            CancelSword();CancelArchery();
+            CancelCast();CancelSword();CancelArchery();
             CancelLeap();
             CancelCarry();
             greeting.Cancel();

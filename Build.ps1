@@ -1,5 +1,5 @@
 ﻿param(
-    [ValidateSet('App', 'Tests', 'AnimationCheck', 'RigCheck', 'FeedbackCheck', 'CarryCheck', 'CarryAnimationCheck', 'ArtCheck', 'DesktopPaintCheck', 'GestureCheck', 'BubbleCheck', 'WaveCheck', 'RunCheck', 'LeapCheck', 'PivotCheck', 'TuningCheck', 'TransitionCheck', 'CarryMotionCheck', 'PickupCheck', 'SleepGridCheck', 'ActionCheck', 'CorrectionCheck', 'FixedParametersCheck', 'ArcheryEffectsCheck', 'ArcheryPoseCheck', 'ArcheryStanceCheck', 'ArcheryLayerCheck', 'ArcheryImpactCheck','SwordCheck','FrozenCheck','SwordPreview','RevisionCheck','InteractionCheck')]
+    [ValidateSet('App', 'Tests', 'AnimationCheck', 'RigCheck', 'FeedbackCheck', 'CarryCheck', 'CarryAnimationCheck', 'ArtCheck', 'DesktopPaintCheck', 'GestureCheck', 'BubbleCheck', 'WaveCheck', 'RunCheck', 'LeapCheck', 'PivotCheck', 'TuningCheck', 'TransitionCheck', 'CarryMotionCheck', 'PickupCheck', 'SleepGridCheck', 'ActionCheck', 'CorrectionCheck', 'FixedParametersCheck', 'ArcheryEffectsCheck', 'ArcheryPoseCheck', 'ArcheryStanceCheck', 'ArcheryLayerCheck', 'ArcheryImpactCheck','SwordCheck','FrozenCheck','SwordPreview','RevisionCheck','InteractionCheck','CastingCheck')]
     [string]$Target = 'App',
     [switch]$Rebuild
 )
@@ -18,6 +18,7 @@ try {
     $specifications = @{
         ArcheryLayerCheck = @{ Name = 'ArcheryLayerCheck'; Main = 'ArcheryLayerCheck'; Kind = 'exe'; Test = 'ArcheryLayerCheck.cs' }
         ArcheryImpactCheck = @{ Name = 'ArcheryImpactCheck'; Main = 'ArcheryImpactCheck'; Kind = 'exe'; Test = 'ArcheryImpactCheck.cs' }
+        CastingCheck = @{ Name = 'CastingCheck'; Main = 'CastingCheck'; Kind = 'exe'; Test = 'CastingCheck.cs' }
         InteractionCheck = @{ Name = 'InteractionCheck'; Main = 'InteractionCheck'; Kind = 'exe'; Test = 'InteractionCheck.cs' }
         RevisionCheck = @{ Name = 'RevisionCheck'; Main = 'RevisionCheck'; Kind = 'exe'; Test = 'RevisionCheck.cs' }
         SwordCheck = @{ Name = 'SwordCheck'; Main = 'SwordCheck'; Kind = 'exe'; Test = 'SwordCheck.cs' }

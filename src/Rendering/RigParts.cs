@@ -50,6 +50,7 @@ namespace JouchoPet {
    RigParts.Segment(g,hand,Wrist,Tip,wrist,finger);
   }
   internal void DrawLowerOnly(Graphics g,PointF elbow,PointF wrist){RigParts.Segment(g,joint,Elbow,Wrist,elbow,wrist);RigParts.Segment(g,lower,Elbow,Wrist,elbow,wrist);}
+  internal void DrawHandOnly(Graphics g,PointF wrist,PointF finger){RigParts.Segment(g,hand,Wrist,Tip,wrist,finger);}
   internal void DrawUpper(Graphics g,PointF shoulder,PointF elbow) {
    RigParts.Segment(g,upper,Shoulder,Elbow,shoulder,elbow);
   }

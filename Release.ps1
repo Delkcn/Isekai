@@ -1,5 +1,5 @@
 ﻿$ErrorActionPreference = 'Stop'
-$version = '0.7.14-preview'
+$version = '0.7.24-preview'
 $target = Join-Path $PSScriptRoot ("dist\IsekaijouchoPet-v" + $version)
 if (Test-Path -LiteralPath $target) { throw 'Release folder already exists. Choose a new version before packaging again.' }
 foreach ($name in @('IsekaijouchoPet.exe','assets')) {
@@ -27,10 +27,10 @@ foreach ($name in $resources) {
 $zip = $target + '.zip'
 $preview = Join-Path $target 'preview'
 New-Item -ItemType Directory -Path $preview | Out-Null
-Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'qa\v0714') -File | Where-Object { $_.Extension -in @('.html','.png') } | ForEach-Object {
+Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'qa\v0724') -File | Where-Object { $_.Extension -in @('.html','.png') -or $_.Name -in @('validation.md','agent-interface.md','FocusedCheck.txt','JourneyCheck.txt','FixedParametersCheck.txt') } | ForEach-Object {
     Copy-Item -LiteralPath $_.FullName -Destination $preview
 }
-Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'qa\v0714\FocusedCheck.txt') -Destination (Join-Path $target 'CHECK_RESULTS.txt')
-Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'qa\v0714\agent-interface.md') -Destination (Join-Path $target 'AGENT_INTERFACE.md')
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'qa\v0724\FocusedCheck.txt') -Destination (Join-Path $target 'CHECK_RESULTS.txt')
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'qa\v0724\agent-interface.md') -Destination (Join-Path $target 'AGENT_INTERFACE.md')
 Compress-Archive -LiteralPath $target -DestinationPath $zip
 Get-Item -LiteralPath $zip | Select-Object FullName,Length

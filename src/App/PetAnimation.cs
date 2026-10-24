@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
 namespace JouchoPet
@@ -19,13 +19,13 @@ namespace JouchoPet
             bool happy=now<happyUntil;
             if(!CarryActive)carryAmount=Ease(carryAmount,0,10,dt);
             int carryDesired=0;
-            try { if(!leap.Busy && !archery.Busy && !sword.Busy)carryDesired=CarryDesired(dt); } catch(Exception ex) { CarryError(ex); }
+            try { if(!leap.Busy && !archery.Busy && !sword.Busy && !CastBusy)carryDesired=CarryDesired(dt); } catch(Exception ex) { CarryError(ex); }
             if(leap.Busy)carryEffort=Ease(carryEffort,0,8,dt);
             if(!CarryActive) {
                 if(carryAmount<.001)carryAmount=0;
                 if(carryEffort<.001)carryEffort=0;
             }
-            if(!CarryActive && !leap.Busy && !archery.Busy && !sword.Busy && !dragging && !menuOpen)
+            if(!CarryActive && !leap.Busy && !archery.Busy && !sword.Busy && !CastBusy && !dragging && !menuOpen)
             {
                 if(!sleeping && (now-lastInput).TotalMinutes>=5) SetSleep(true);
                 if(!sleeping && !happy && !rest.BlocksWalking && wandering && now>=stateUntil)
@@ -38,14 +38,15 @@ namespace JouchoPet
             }
             // Claim an already planted pose before ordinary locomotion can add
             // a needless brake/settle cycle to the sword request.
-            BeginSwordIfReady();
+            BeginSwordIfReady();BeginCastIfReady();
             int desired=walking && wandering && !sleeping && !happy && !rest.BlocksWalking && !greeting.Active && !dragging && !menuOpen?direction:0;
             if(CarryActive)desired=menuOpen?0:carryDesired;
             if(archery.Busy)desired=archery.ApproachDirection(motion,!menuOpen && !rest.BlocksWalking && !greeting.Active);
             if(sword.Busy)desired=sword.ApproachDirection(motion,!menuOpen && !rest.BlocksWalking && !greeting.Active);
+            if(CastBusy)desired=CastDesired(!menuOpen && !rest.BlocksWalking && !greeting.Active && !dragging);
             if(leap.Pending)desired=leap.ApproachDirection(motion,!menuOpen && !rest.BlocksWalking && !greeting.Active);
-            double travel=sword.Active || (sword.Busy && menuOpen) || archery.Active || (archery.Busy && menuOpen) || leap.Active || CarryApproachAir || (CarryActive && (menuOpen || carryPhase=="push" || carryPhase=="runpickup"))?0:
-                motion.Update(dt,desired,petHeight,(CarryActive && !CarryRunApproach) || leap.Pending || archery.Pending || sword.Pending,CarryRunApproach || (running && !CarryActive && !leap.Busy));
+            double travel=casting.Active || (CastBusy && menuOpen) || sword.Active || (sword.Busy && menuOpen) || archery.Active || (archery.Busy && menuOpen) || leap.Active || CarryApproachAir || (CarryActive && (menuOpen || carryPhase=="push" || carryPhase=="runpickup"))?0:
+                motion.Update(dt,desired,petHeight,(CarryActive && !CarryRunApproach) || leap.Pending || archery.Pending || sword.Pending || CastBusy,CastRunApproach || CarryRunApproach || (running && !CarryActive && !leap.Busy));
             rest.Update(dt, motion.State=="idle" && motion.Facing==0);
             greeting.Update(menuOpen?0:dt,motion.State=="idle" && motion.Facing==0 && rest.Sleep<.025);
             greetingWaveBlend=Ease(greetingWaveBlend,greetingWaves?1:0,9,menuOpen?0:dt);
@@ -71,6 +72,7 @@ namespace JouchoPet
             UpdateLeap(dt);
             UpdateArchery(dt);
             UpdateSword(dt);
+            UpdateCast(dt);
             try { CarryAfterMove(dt); } catch(Exception ex) { CarryError(ex); }
             // CarryAfterMove synchronizes the gait with the accepted icon path.
             speed=motion.Speed;gait=motion.Phase;
@@ -97,6 +99,7 @@ namespace JouchoPet
         {
             if(!IsHandleCreated || IsDisposed || !renderer.Ready) return;
             if(sword.Active){RenderSword();return;}
+            if(casting.Active){RenderCast();return;}
             RenderFrame frame=new RenderFrame
             {
                 Time=elapsed, Gait=gait, Speed=speed, MotionState=motion.State, Facing=motion.Facing, Angle=motion.Angle, Settle=motion.Settle, Dragging=dragging,
@@ -109,6 +112,7 @@ namespace JouchoPet
                 Archery=archery.Active,BowPose=archery.Pose
             };
             Native.Present(Handle,RenderMagic(renderer.Draw(frame)),Left,Top);
+            RenderCastFlight();
 
             FollowSpeech();
         }

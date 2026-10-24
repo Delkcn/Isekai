@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -14,10 +14,11 @@ class FixedParametersCheck {
  static void Main(){try {
   string snapshot=Path.Combine("qa","v0643","baseline","animation-parameters.json");
   var approved=new JavaScriptSerializer().Deserialize<Dictionary<string,double>>(File.ReadAllText(snapshot));
+  approved["runSpeed"]*=1.5; // 0.7.24 explicitly updates this one approved value.
   string userPath=AnimationParameters.SettingsPath;
   byte[] before=File.Exists(userPath)?File.ReadAllBytes(userPath):null;
   AnimationParameters.Reset();
-  Check(approved.Count==24 && AnimationParameters.Snapshot().Count==24 && AnimationParameters.Matches(approved),"all 24 baked values exactly equal the user's approved snapshot");
+  Check(approved.Count==24 && AnimationParameters.Snapshot().Count==24 && AnimationParameters.Matches(approved),"23 approved values unchanged; requested run speed is 150 percent");
   AnimationParameters.Set("runSpeed",150);
   AnimationParameters.UseFixedValues();
   Check(AnimationParameters.Matches(approved),"application startup restores approved values without importing a file");
@@ -31,7 +32,7 @@ class FixedParametersCheck {
   AnimationParameters.Reset();
   Check(AnimationParameters.Matches(approved),"legacy load/reset cannot change fixed application values");
   var detached=AnimationParameters.Snapshot();detached["runSpeed"]=170;
-  Check(AnimationParameters.Get("runSpeed")==132,"returned snapshots cannot mutate fixed application values");
+  Check(AnimationParameters.Get("runSpeed")==198,"returned snapshots cannot mutate fixed application values");
   Check(typeof(Pet).GetField("animationDebug",BindingFlags.Instance|BindingFlags.NonPublic)==null && typeof(Pet).GetMethod("OpenAnimationDebug",BindingFlags.Instance|BindingFlags.NonPublic)==null,"shipped Pet has no debug window instance or opening action");
   Check(before==null ? !File.Exists(userPath) : File.Exists(userPath)&&Same(before,File.ReadAllBytes(userPath)),"user settings file remains byte-identical");
   Console.WriteLine("All "+count+" fixed-parameter checks passed.");

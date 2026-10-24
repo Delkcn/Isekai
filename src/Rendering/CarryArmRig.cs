@@ -33,7 +33,12 @@ namespace JouchoPet {
    var polygon=new PointF[Outline[direction].Length];for(int i=0;i<polygon.Length;i++)polygon[i]=map(Outline[direction][i].X,Outline[direction][i].Y);
    using(var patch=AssetStore.Image("v0611/underarm-backplate.png"))using(var path=new GraphicsPath()) {
     path.AddPolygon(polygon);
-    for(int y=0;y<height;y++)for(int x=0;x<width;x++) {
+    // Test only the sleeve's bounding box; native path queries across the
+    // entire transparent canvas dominate repeated rig initialization.
+    RectangleF cutBounds=path.GetBounds();cutBounds.Inflate(1,1);
+    int x0=Math.Max(0,(int)Math.Floor(cutBounds.Left)),x1=Math.Min(width,(int)Math.Ceiling(cutBounds.Right));
+    int y0=Math.Max(0,(int)Math.Floor(cutBounds.Top)),y1=Math.Min(height,(int)Math.Ceiling(cutBounds.Bottom));
+    for(int y=y0;y<y1;y++)for(int x=x0;x<x1;x++) {
      if(!path.IsVisible(x+.5f,y+.5f))continue;
      int k=y*width+x;uint original=(uint)plate[k];arm[k]=(int)original;
      double sourceX=pose.Anchor+(x-width*.5)/scale;
