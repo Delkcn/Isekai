@@ -1,0 +1,17 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>0.8.22 · A2 发光羽毛</title>
+<style>body{max-width:960px;margin:32px auto;padding:0 20px;background:#181c25;color:#ecf3fb;font:16px/1.7 system-ui}h1{font-size:28px}select,button{font:inherit;padding:7px 12px;border:1px solid #788598;border-radius:8px;color:inherit;background:#303a4a}figure{margin:20px 0;background:#1d222d;border-radius:16px;text-align:center}img{max-width:100%;height:auto}input{width:100%}small{color:#a7bbce}a{color:#bce5ff}</style>
+<h1>A2 · 发光羽毛</h1><p>向上、向下的跃动使用白色发光羽毛，外缘带淡蓝光晕。A1 保留花瓣，动作与出现时序保持。左侧 A1，右侧 A2。</p>
+<select id="clip" aria-label="动作"><option value="up-right">向上 · 朝右</option><option value="up-left">向上 · 朝左</option><option value="down-right">向下 · 朝右</option><option value="down-left">向下 · 朝左</option></select> <button id="play">播放</button>
+<figure><img id="frame" src="frames/up-right-08.png" alt="A1 花瓣与 A2 发光羽毛对照"><figcaption id="caption">第 9 / 40 帧</figcaption></figure><label for="seek">逐帧查看</label><input id="seek" type="range" min="0" max="39" value="8">
+<small>离线姿态预览不移动桌面窗口；显示角色局部动作与特效，不代表窗口运动轨迹或程序显示帧率。</small>
+<h2>羽毛细节</h2><img src="feather-detail.png" alt="放大发光羽片、羽轴、羽枝和淡蓝光晕">
+<p><a href="validation.md">验证说明</a> · <a href="FocusedCheck.txt">检查结果</a></p>
+<script>
+const clip=document.querySelector('#clip'),frame=document.querySelector('#frame'),play=document.querySelector('#play'),seek=document.querySelector('#seek'),caption=document.querySelector('#caption');let playing=false,index=8,start=0,ready=false,token=0;
+function duration(){return clip.value.startsWith('up')?1950:1790;}
+function path(i){return `frames/${clip.value}-${String(i).padStart(2,'0')}.png`;}
+function show(i){index=i;frame.src=path(i);seek.value=i;caption.textContent=`${(i*duration()/39000).toFixed(2)} 秒 · 第 ${i+1} / 40 帧`;}
+async function load(){const id=++token;ready=false;await Promise.all(Array.from({length:40},(_,i)=>new Promise(resolve=>{const image=new Image();image.onload=image.onerror=resolve;image.src=path(i);})));if(id!==token)return;ready=true;show(8);start=performance.now()-index*duration()/39;}
+play.onclick=()=>{playing=!playing;play.textContent=playing?'暂停':'播放';start=performance.now()-index*duration()/39;};seek.oninput=()=>{playing=false;play.textContent='播放';show(+seek.value);};clip.onchange=load;
+function tick(now){if(playing&&ready)show(Math.min(39,Math.floor(((now-start)%(duration()+500))/duration()*39)));requestAnimationFrame(tick);}load();requestAnimationFrame(tick);
+</script></html>

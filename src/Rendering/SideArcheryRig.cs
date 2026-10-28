@@ -12,12 +12,12 @@ namespace JouchoPet {
   readonly ArcheryStance[] stance=new ArcheryStance[2];
   readonly Bitmap canvas;readonly int width;readonly double size;
   internal double MinimumArea=1;
-  internal ArcheryRig(int w,int h,double s,SideWalk sides){width=w;size=s;canvas=new Bitmap(w,h,PixelFormat.Format32bppPArgb);
+  internal ArcheryRig(int w,int h,double s,SideWalk sides,CharacterForm form=CharacterForm.AnemoneI){width=w;size=s;canvas=new Bitmap(w,h,PixelFormat.Format32bppPArgb);
    try{PaintedBowArt.Prepare();for(int d=0;d<2;d++){
     neutral[d]=(Bitmap)sides.Draw(0,0,0,d==0?-1:1,1).Clone();
-    using(var cut=new CarryArmRig(d,neutral[d],s)){
+    using(var cut=new CarryArmRig(d,neutral[d],s,form)){
      body[d]=RigParts.BitmapOf(cut.DiagnosticBackplate,w,h);
-     stance[d]=new ArcheryStance(w,h,s,d==0?-1:1,body[d]);
+     stance[d]=new ArcheryStance(w,h,s,d==0?-1:1,body[d],form);
      var definition=CharacterArt.Definition(d==0?"profile-left":"profile-right");
      PointF tip=new PointF(cut.Wrist.X,(float)CharacterArt.Y(definition,311,s));
      if(d==1)tip=new PointF((float)(w*.5+(1602-definition.Anchor)*CharacterArt.Scale(definition,s)),(float)CharacterArt.Y(definition,313,s));

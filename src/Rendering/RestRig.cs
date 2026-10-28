@@ -9,10 +9,10 @@ namespace JouchoPet {
   readonly int count;
   public double LastMinimumJacobian=1;
   internal PoseMesh.Pose[] DiagnosticKeys {get{return mesh.DiagnosticKeys;}}
-  public RestRig(Bitmap[] original,int w,int h,int size,Bitmap standing) {
+  public RestRig(Bitmap[] original,int w,int h,int size,Bitmap standing,CharacterForm form=CharacterForm.AnemoneI) {
    count=9;var keys=new PoseMesh.Pose[count];keys[0]=CharacterArt.Register(standing,"front",size);
-   using(Bitmap sheet=AssetStore.Image("v067/sleep-keys-eye.png"))for(int i=1;i<8;i++)keys[i]=SleepArt.Key(sheet,i,w,h,size);
-   using(Bitmap final=CharacterArt.Normalized("sleep",w,h,size))keys[8]=CharacterArt.Register(final,"sleep",size);
+   using(Bitmap sheet=AssetStore.Image("v067/sleep-keys-eye.png",form))for(int i=1;i<8;i++)keys[i]=SleepArt.Key(sheet,i,w,h,size,form);
+   using(Bitmap final=CharacterArt.Normalized("sleep",w,h,size,form))keys[8]=CharacterArt.Register(final,"sleep",size);
    // Finish with the same folded-arm drawing used at rest. The old sheet's
    // last drawing had a different forearm, causing a late arm replacement.
    keys[7]=keys[8];

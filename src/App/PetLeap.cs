@@ -9,7 +9,7 @@ namespace JouchoPet {
    CancelLeap();SetSleep(false);greeting.Cancel();walking=false;running=false;
    leap.Request(vertical,motion.Facing==0?direction:motion.Facing);
    stateUntil=DateTime.UtcNow.AddSeconds(6);
-   Say(vertical<0?"借一点花瓣的力气。\n……到上面看看。":"往下挪一点。\n放心，我会站稳的。");
+   Say(vertical<0?(CurrentForm==CharacterForm.AnemoneII?"借一点羽毛的光。\n……到上面看看。":"借一点花瓣的力气。\n……到上面看看。"):"往下挪一点。\n放心，我会站稳的。");
   }
   void CancelLeap() {
    bool wasActive=leap.Active;leap.Cancel();

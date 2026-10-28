@@ -13,18 +13,19 @@ namespace JouchoPet {
   readonly Bitmap canvas;
   readonly double size;readonly int pad;
   internal int Padding{get{return pad;}}
-  internal SwordRig(int w,int h,double s,SideWalk sides){
+  internal SwordRig(int w,int h,double s,SideWalk sides,CharacterForm form=CharacterForm.AnemoneI){
    size=s;pad=(int)Math.Ceiling(s);canvas=new Bitmap(w+2*pad,h+2*pad,PixelFormat.Format32bppPArgb);
    for(int d=0;d<2;d++){
     neutral[d]=(Bitmap)sides.Draw(0,0,0,d==0?-1:1,1).Clone();
-    using(var cut=new CarryArmRig(d,neutral[d],s)){
+    using(var cut=new CarryArmRig(d,neutral[d],s,form)){
      body[d]=d==0?(Bitmap)neutral[d].Clone():RigParts.BitmapOf(cut.DiagnosticBackplate,w,h);
      if(d==1){var def=CharacterArt.Definition("profile-right");PointF tip=new PointF(cut.Wrist.X,(float)CharacterArt.Y(def,313,s));arm=new JointArm(cut.DiagnosticArm,w,h,s,cut.Shoulder,cut.Elbow,cut.Wrist,tip);}
     }
    }
-   for(int d=0;d<2;d++){skeleton[d]=new SlashSkeleton(w,s,d==0?-1:1,arm);skin[d]=new SlashBodyRig(w,h,s,d==0?-1:1,body[d],skeleton[d]);}
+   for(int d=0;d<2;d++){skeleton[d]=new SlashSkeleton(w,s,d==0?-1:1,arm);skin[d]=new SlashBodyRig(w,h,s,d==0?-1:1,body[d],skeleton[d],form);}
   }
   internal SlashSkeleton.Pose SkeletonPose(SwordPose p){return skeleton[p.Facing<0?0:1].Sample(p);}
+  internal PointF[] Blade(SwordPose p){var b=Sample(p);return art.Blade(b.Grip,b.Angle,size);}
   internal Bones Sample(SwordPose p){
    var b=SkeletonPose(p);double angle=Math.Atan2(Math.Sin(b.HandAngle+Math.PI/2),p.Facing*Math.Cos(b.HandAngle+Math.PI/2));
    return new Bones{Shoulder=b.Shoulder,Elbow=b.Elbow,Wrist=b.Wrist,Grip=b.Grip,Tip=art.Tip(b.Grip,angle,size),Angle=angle,UpperLength=RigParts.Length(arm.Shoulder,arm.Elbow),LowerLength=RigParts.Length(arm.Elbow,arm.Wrist)};

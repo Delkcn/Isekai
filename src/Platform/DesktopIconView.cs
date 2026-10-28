@@ -55,8 +55,10 @@ namespace JouchoPet {
   }
   // LVM_GETITEMRECT / LVIR_ICON: actual icon bounds, excluding its label.
   // The only written bytes belong to our scratch buffer, never to an item.
-  internal Rectangle IconRectangle(int index){
-   byte[] bytes=new byte[16];Array.Copy(BitConverter.GetBytes(1),bytes,4);UIntPtr written,read;
+  internal Rectangle IconRectangle(int index){return ItemRectangle(index,false);}
+  internal Rectangle ItemRectangle(int index,bool includeLabel){
+   // LVIR_BOUNDS includes the filename; LVIR_ICON retains weapon target geometry.
+   byte[] bytes=new byte[16];Array.Copy(BitConverter.GetBytes(includeLabel?0:1),bytes,4);UIntPtr written,read;
    if(!WriteProcessMemory(process,point,bytes,new UIntPtr(16),out written)||written.ToUInt64()!=16)throw new Win32Exception(Marshal.GetLastWin32Error());
    if(Send(0x100E,index,point)==IntPtr.Zero)throw new InvalidOperationException("无法读取桌面图标边界。");
    if(!ReadProcessMemory(process,point,bytes,new UIntPtr(16),out read)||read.ToUInt64()!=16)throw new Win32Exception(Marshal.GetLastWin32Error());

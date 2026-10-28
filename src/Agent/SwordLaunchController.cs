@@ -6,6 +6,7 @@ namespace JouchoPet {
  public sealed class ProgramLaunchResult:EventArgs {
   public bool Success {get;private set;}
   public string Error {get;private set;}
+  internal bool OrdinaryOpenFallback {get;set;}
   public ProgramLaunchResult(bool success,string error){Success=success;Error=error??"";}
  }
  public interface IProgramLauncher {ProgramLaunchResult Launch(string executablePath);}

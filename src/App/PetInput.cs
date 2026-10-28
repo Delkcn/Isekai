@@ -6,7 +6,7 @@ namespace JouchoPet
     sealed partial class Pet
     {
         void StartWalk(int facing,bool run=false)
-        {
+        {CancelUtilityAction();
             CancelCarry();
             SetSleep(false);
             direction=facing;
@@ -18,7 +18,7 @@ namespace JouchoPet
         }
         void HeadPat()
         {
-            CancelCast();CancelSword();CancelArchery();
+            CancelDailyAction();CancelCast();CancelSword();CancelArchery();
             CancelLeap();
             greeting.Cancel();
             CancelCarry();
@@ -33,7 +33,7 @@ namespace JouchoPet
         }
         void SetSleep(bool value)
         {
-            CancelCast();CancelSword();CancelArchery();
+            CancelDailyAction();CancelCast();CancelSword();CancelArchery();
             CancelLeap();
             bool changed=sleeping!=value;
             greeting.Cancel();
@@ -48,7 +48,7 @@ namespace JouchoPet
             Render();
         }
         void Greet(bool wave=false) {
-            CancelCast();CancelSword();CancelArchery();
+            CancelDailyAction();CancelCast();CancelSword();CancelArchery();
             CancelLeap();
             greetingWaves=wave;
             CancelCarry();rest.RequestSleep(false);sleeping=false;sleepItem.Checked=false;walking=false;
@@ -60,11 +60,12 @@ namespace JouchoPet
             lastInput=DateTime.UtcNow;
             if(e.Button==MouseButtons.Right)
             {
+                if((Control.ModifierKeys&Keys.Control)!=0){SelectForm(CurrentForm==CharacterForm.AnemoneI?CharacterForm.AnemoneII:CharacterForm.AnemoneI);return;}
                 menu.Show(Cursor.Position);
                 return;
             }
             if(e.Button!=MouseButtons.Left) return;
-            CancelCast();CancelSword();CancelArchery();
+            CancelDailyAction();CancelCast();CancelSword();CancelArchery();
             CancelLeap();
             CancelCarry();
             greeting.Cancel();

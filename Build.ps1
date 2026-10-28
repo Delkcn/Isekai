@@ -1,5 +1,5 @@
-﻿param(
-    [ValidateSet('App', 'Tests', 'AnimationCheck', 'RigCheck', 'FeedbackCheck', 'CarryCheck', 'CarryAnimationCheck', 'ArtCheck', 'DesktopPaintCheck', 'GestureCheck', 'BubbleCheck', 'WaveCheck', 'RunCheck', 'LeapCheck', 'PivotCheck', 'TuningCheck', 'TransitionCheck', 'CarryMotionCheck', 'PickupCheck', 'SleepGridCheck', 'ActionCheck', 'CorrectionCheck', 'FixedParametersCheck', 'ArcheryEffectsCheck', 'ArcheryPoseCheck', 'ArcheryStanceCheck', 'ArcheryLayerCheck', 'ArcheryImpactCheck','SwordCheck','FrozenCheck','SwordPreview','RevisionCheck','InteractionCheck','CastingCheck')]
+param(
+    [ValidateSet('App', 'Tests', 'AnimationCheck', 'RigCheck', 'FeedbackCheck', 'CarryCheck', 'CarryAnimationCheck', 'ArtCheck', 'DesktopPaintCheck', 'GestureCheck', 'BubbleCheck', 'WaveCheck', 'RunCheck', 'LeapCheck', 'PivotCheck', 'TuningCheck', 'TransitionCheck', 'CarryMotionCheck', 'PickupCheck', 'SleepGridCheck', 'ActionCheck', 'CorrectionCheck', 'FixedParametersCheck', 'ArcheryEffectsCheck', 'ArcheryPoseCheck', 'ArcheryStanceCheck', 'ArcheryLayerCheck', 'ArcheryImpactCheck','SwordCheck','FrozenCheck','SwordPreview','RevisionCheck','InteractionCheck','CastingCheck','DailyCheck','UtilityCheck','EyePlacementCheck','MiSigilCheck','FormCheck','HitFileCheck','AttackFileCheck','SelectionCheck','EmergencyCheck','DefenderCheck','TurnContinuityCheck','CoatCheck','RightCoatCheck','FrontGarmentCheck','FrontCoatColorCheck','TurnRateCheck','FormTransitionCheck','LeapFeatherCheck')]
     [string]$Target = 'App',
     [switch]$Rebuild
 )
@@ -16,6 +16,24 @@ try {
     }
 
     $specifications = @{
+        LeapFeatherCheck = @{ Name = 'LeapFeatherCheck'; Main = 'LeapFeatherCheck'; Kind = 'exe'; Test = 'LeapFeatherCheck.cs' }
+        FormTransitionCheck = @{ Name = 'FormTransitionCheck'; Main = 'FormTransitionCheck'; Kind = 'exe'; Test = 'FormTransitionCheck.cs' }
+        TurnRateCheck = @{ Name = 'TurnRateCheck'; Main = 'TurnRateCheck'; Kind = 'exe'; Test = 'TurnRateCheck.cs' }
+        FrontCoatColorCheck = @{ Name = 'FrontCoatColorCheck'; Main = 'FrontCoatColorCheck'; Kind = 'exe'; Test = 'FrontCoatColorCheck.cs' }
+        FrontGarmentCheck = @{ Name = 'FrontGarmentCheck'; Main = 'FrontGarmentCheck'; Kind = 'exe'; Test = 'FrontGarmentCheck.cs' }
+        RightCoatCheck = @{ Name = 'RightCoatCheck'; Main = 'RightCoatCheck'; Kind = 'exe'; Test = 'RightCoatCheck.cs' }
+        CoatCheck = @{ Name = 'CoatCheck'; Main = 'CoatCheck'; Kind = 'exe'; Test = 'CoatCheck.cs' }
+        TurnContinuityCheck = @{ Name = 'TurnContinuityCheck'; Main = 'TurnContinuityCheck'; Kind = 'exe'; Test = 'TurnContinuityCheck.cs' }
+        DefenderCheck = @{ Name = 'DefenderCheck'; Main = 'DefenderCheck'; Kind = 'exe'; Test = 'DefenderCheck.cs' }
+        EmergencyCheck = @{ Name = 'EmergencyCheck'; Main = 'EmergencyCheck'; Kind = 'exe'; Test = 'EmergencyCheck.cs' }
+        SelectionCheck = @{ Name = 'SelectionCheck'; Main = 'SelectionCheck'; Kind = 'exe'; Test = 'SelectionCheck.cs' }
+        AttackFileCheck = @{ Name = 'AttackFileCheck'; Main = 'AttackFileCheck'; Kind = 'exe'; Test = 'AttackFileCheck.cs' }
+        HitFileCheck = @{ Name = 'HitFileCheck'; Main = 'HitFileCheck'; Kind = 'exe'; Test = 'HitFileCheck.cs' }
+        FormCheck = @{ Name = 'FormCheck'; Main = 'FormCheck'; Kind = 'exe'; Test = 'FormCheck.cs' }
+        MiSigilCheck = @{ Name = 'MiSigilCheck'; Main = 'MiSigilCheck'; Kind = 'exe'; Test = 'MiSigilCheck.cs' }
+        EyePlacementCheck = @{ Name = 'EyePlacementCheck'; Main = 'EyePlacementCheck'; Kind = 'exe'; Test = 'EyePlacementCheck.cs' }
+        UtilityCheck = @{ Name = 'UtilityCheck'; Main = 'UtilityCheck'; Kind = 'exe'; Test = 'UtilityCheck.cs' }
+        DailyCheck = @{ Name = 'DailyCheck'; Main = 'DailyCheck'; Kind = 'exe'; Test = 'DailyCheck.cs' }
         ArcheryLayerCheck = @{ Name = 'ArcheryLayerCheck'; Main = 'ArcheryLayerCheck'; Kind = 'exe'; Test = 'ArcheryLayerCheck.cs' }
         ArcheryImpactCheck = @{ Name = 'ArcheryImpactCheck'; Main = 'ArcheryImpactCheck'; Kind = 'exe'; Test = 'ArcheryImpactCheck.cs' }
         CastingCheck = @{ Name = 'CastingCheck'; Main = 'CastingCheck'; Kind = 'exe'; Test = 'CastingCheck.cs' }
@@ -97,3 +115,6 @@ catch {
     Write-Host ('Build failed: ' + $_.Exception.Message) -ForegroundColor Red
     exit 1
 }
+
+
+

@@ -7,6 +7,17 @@ namespace JouchoPet {
   readonly double feather;
   readonly bool complete;
   readonly double canvasWidth,petSize;
+  // Custom aperture registration for a new painting; the closure algorithm is shared.
+  internal CoveredEyeRig(int width,double size,System.Drawing.PointF[] upper,System.Drawing.PointF[] lower){
+   top=new double[width];bottom=new double[width];feather=Math.Max(1.5,size*.009);canvasWidth=width;petSize=size;complete=false;
+   for(int x=0;x<width;x++){
+    top[x]=bottom[x]=-1;
+    for(int i=0;i<upper.Length-1;i++)if(x>=upper[i].X&&x<=upper[i+1].X){
+     double t=(x-upper[i].X)/(upper[i+1].X-upper[i].X);
+     top[x]=upper[i].Y+(upper[i+1].Y-upper[i].Y)*t;bottom[x]=lower[i].Y+(lower[i+1].Y-lower[i].Y)*t;break;
+    }
+   }
+  }
   public CoveredEyeRig(int[] pixels,int width,int height,double size,bool completeAperture=false) {
    top=new double[width];bottom=new double[width];feather=Math.Max(1.5,size*.009);
    complete=completeAperture;canvasWidth=width;petSize=size;
@@ -27,8 +38,8 @@ namespace JouchoPet {
      if(local<0){local+=12;hi=cornerUpper;lo=cornerLower;}
      if(local<0||local>=hi.Length-1)continue;
      int i=(int)local;double f=local-i;
-     top[x]=CharacterArt.Y(face,hi[i]+f*(hi[i+1]-hi[i]),size);
-     bottom[x]=CharacterArt.Y(face,lo[i]+f*(lo[i+1]-lo[i]),size);
+     top[x]=CharacterArt.Y(face,hi[i]+f*(hi[i+1]-hi[i]),size)-EyePlacement.Rise(size);
+     bottom[x]=CharacterArt.Y(face,lo[i]+f*(lo[i+1]-lo[i]),size)-EyePlacement.Rise(size);
     }
     return;
    }
@@ -66,7 +77,7 @@ namespace JouchoPet {
    var face=CharacterArt.Definition("front");double scale=CharacterArt.Scale(face,petSize);
    double sx=face.Anchor+(x-canvasWidth*.5)/scale;
    if(sx<866||sx>875)return pixel;
-   double sy=face.Crown+(y-28)/scale,u=(sx-870.5)/4.5;
+   double sy=face.Crown+(y+EyePlacement.Rise(petSize)-28)/scale,u=(sx-870.5)/4.5;
    // Match the exposed left lid's dark, filled lash weight, clipped to the
    // visible aperture. Coordinates precede head motion and the closure warp.
    double lid=127.6+.7*u*u;
@@ -81,7 +92,18 @@ namespace JouchoPet {
    for(int c=0;c<3;c++)result|=(uint)Math.Round(((pixel>>(c*8))&255)*(1-coverage)+ink[c]*alpha/255.0*coverage)<<(c*8);
    return result;
   }
-  public double SourceY(double x,double y,double closure) {
+  internal uint ClosedLash(uint pixel,double x,double y,double closure,double upperTravel,double strength){
+   int column=(int)Math.Round(x);if(strength<=0||closure<=.65||column<0||column>=top.Length||top[column]<0)return pixel;
+   double upper=top[column],lower=bottom[column],gap=Math.Max(.12,lower-upper);
+   double line=upper+(gap-.12)*upperTravel*Math.Min(1,closure);
+   double coverage=Math.Max(0,1-Math.Abs(y-line)/Math.Max(.55,petSize*.0022));
+   // Stay beneath the registered fringe, and preserve alpha and the short lash shape.
+   if(y<upper||y>lower+.5)return pixel;
+   coverage*=strength*Math.Min(1,(closure-.65)/.35);uint alpha=pixel>>24,result=alpha<<24;
+   for(int c=0;c<3;c++){double original=(pixel>>(c*8))&255,ink=Math.Min(original,(c==2?65:c==1?35:40)*alpha/255.0);result|=(uint)Math.Round(original*(1-coverage)+ink*coverage)<<(c*8);}
+   return result;
+  }
+  public double SourceY(double x,double y,double closure,double upperTravel=0) {
    if(closure<=0||x<0||x>=top.Length-1)return y;
    int i=(int)x;double fraction=x-i;
    // Use the occupied column at the edge rather than bleeding into the hair.
@@ -89,6 +111,16 @@ namespace JouchoPet {
    if(top[column]<0)return y;
    double upper=top[column],lower=bottom[column];
    if(top[i]>=0&&top[i+1]>=0){upper=top[i]+fraction*(top[i+1]-top[i]);lower=bottom[i]+fraction*(bottom[i+1]-bottom[i]);}
+   if(upperTravel>0){
+    // A2 head-pet: meet near the lower lid. Preserve a small aperture and blend
+    // into nearby skin; upper travels about 80%, lower about 20% of the gap.
+    double start=upper-feather,endY=lower+feather;if(y<=start||y>=endY)return y;
+    double amount=Math.Min(1,closure),gap=Math.Max(.12,lower-upper),travel=gap-.12;
+    double movedUpper=upper+travel*upperTravel*amount,movedLower=lower-travel*(1-upperTravel)*amount;
+    if(y<movedUpper)return start+(y-start)*(upper-start)/(movedUpper-start);
+    if(y<movedLower)return upper+(y-movedUpper)*(lower-upper)/(movedLower-movedUpper);
+    return lower+(y-movedLower)*(endY-lower)/(endY-movedLower);
+   }
    double end=lower+feather;if(y<=upper||y>=end)return y;
    double closed=lower+(upper+.12-lower)*Math.Min(1,closure);
    if(y<closed)return upper+(y-upper)*(lower-upper)/(closed-upper);

@@ -23,7 +23,7 @@ namespace JouchoPet {
   internal int[] DiagnosticBackplate {get{return plate;}}
   internal int[] DiagnosticArm {get{return arm;}}
   internal int[] DiagnosticPosedArm {get{return posed;}}
-  public CarryArmRig(int direction,Bitmap body,double petSize) {
+  public CarryArmRig(int direction,Bitmap body,double petSize,CharacterForm form=CharacterForm.AnemoneI) {
    width=body.Width;height=body.Height;size=petSize;facing=direction==0?-1:1;
    originalBody=PoseMesh.Read(body);plate=(int[])originalBody.Clone();arm=new int[plate.Length];posed=new int[plate.Length];output=new int[plate.Length];
    canvas=new Bitmap(width,height,PixelFormat.Format32bppPArgb);
@@ -31,7 +31,7 @@ namespace JouchoPet {
    Func<double,double,PointF> map=(x,y)=>new PointF((float)(width*.5+(x-pose.Anchor)*scale),(float)CharacterArt.Y(pose,y,size));
    shoulder=map(direction==0?171:1618,184);elbow=map(direction==0?178:1604,246);wrist=map(direction==0?178:1597,301);
    var polygon=new PointF[Outline[direction].Length];for(int i=0;i<polygon.Length;i++)polygon[i]=map(Outline[direction][i].X,Outline[direction][i].Y);
-   using(var patch=AssetStore.Image("v0611/underarm-backplate.png"))using(var path=new GraphicsPath()) {
+   using(var patch=AssetStore.Image("v0611/underarm-backplate.png",form))using(var path=new GraphicsPath()) {
     path.AddPolygon(polygon);
     // Test only the sleeve's bounding box; native path queries across the
     // entire transparent canvas dominate repeated rig initialization.
@@ -45,7 +45,7 @@ namespace JouchoPet {
      double neck=CharacterArt.Top(pose)+CharacterArt.HeadToNeck,n=(y-28)/size;
      double sourceY=n<=neck?pose.Crown+(n-CharacterArt.Top(pose))/CharacterArt.HeadToNeck*(pose.Neck-pose.Crown):pose.Neck+(n-neck)/(.98-neck)*(pose.Sole-pose.Neck);
      int px=Math.Max(0,Math.Min(299,(int)Math.Round(direction*150+sourceX-(direction==0?70:1510))));
-     int py=Math.Max(0,Math.Min(239,(int)Math.Round(sourceY-150)));Color color=patch.GetPixel(px,py);uint a=original>>24;
+     int py=Math.Max(0,Math.Min(239,(int)Math.Round(sourceY-150)));Color color=patch.GetPixel(patch.Width==300?px:Math.Min(patch.Width-1,(int)((px+.5)*patch.Width/300.0)),patch.Height==240?py:Math.Min(patch.Height-1,(int)((py+.5)*patch.Height/240.0)));uint a=original>>24;
      // Scanline normalization can leave interior alpha at 254. Preserve its
      // coverage instead of treating every non-255 pixel as empty space.
      plate[k]=(int)((a<<24)|((uint)(color.R*a/255)<<16)|((uint)(color.G*a/255)<<8)|(uint)(color.B*a/255));

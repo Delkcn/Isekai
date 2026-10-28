@@ -5,6 +5,12 @@ namespace JouchoPet {
   internal PointF SourceGrip{get{return new PointF(sword.Width*.5f,sword.Height*.815f);}}
   internal double Scale(double size){return size*.80*.75/(sword.Height*.96);}
   internal PointF Tip(PointF grip,double angle,double size){double distance=sword.Height*.805*Scale(size);return RigParts.Add(grip,Math.Cos(angle)*distance,Math.Sin(angle)*distance);}
+  // Outline of the painted blade, excluding handle/guard and decorative glow.
+  internal PointF[] Blade(PointF grip,double angle,double size){
+   var points=new[]{new PointF(.455f,.64f),new PointF(.465f,.15f),new PointF(.5f,.01f),new PointF(.54f,.14f),new PointF(.545f,.64f)};
+   double c=Math.Cos(angle+Math.PI/2),s=Math.Sin(angle+Math.PI/2),scale=Scale(size);
+   for(int i=0;i<points.Length;i++){double x=(points[i].X*sword.Width-SourceGrip.X)*scale,y=(points[i].Y*sword.Height-SourceGrip.Y)*scale;points[i]=RigParts.Add(grip,x*c-y*s,x*s+y*c);}return points;
+  }
   internal void DrawSword(Graphics g,PointF grip,double angle,double size,double opacity){var state=g.Save();g.TranslateTransform(grip.X,grip.Y);g.RotateTransform((float)(angle*180/Math.PI+90));double scale=Scale(size);g.ScaleTransform((float)scale,(float)scale);using(var attr=new ImageAttributes()){var m=new ColorMatrix();m.Matrix33=(float)opacity;attr.SetColorMatrix(m);g.DrawImage(sword,new Rectangle(-(int)SourceGrip.X,-(int)SourceGrip.Y,sword.Width,sword.Height),0,0,sword.Width,sword.Height,GraphicsUnit.Pixel,attr);}g.Restore(state);}
   // In both authored right-hand views the thumb/handle exit is source -Y.
   // Bind that axis to the blade, rather than independently rotating a fist

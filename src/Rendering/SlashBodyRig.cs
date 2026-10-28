@@ -9,9 +9,9 @@ namespace JouchoPet {
   readonly SingleSkin skin;
   readonly int[] torso;
   readonly SlashSkeleton skeleton;
-  internal SlashBodyRig(int w,int h,double size,int facing,Bitmap backplate,SlashSkeleton bones){
+  internal SlashBodyRig(int w,int h,double size,int facing,Bitmap backplate,SlashSkeleton bones,CharacterForm form=CharacterForm.AnemoneI){
    skeleton=bones;skin=new SingleSkin(w,h);
-   using(var layers=new ArcheryStance(w,h,size,facing,backplate)){
+   using(var layers=new ArcheryStance(w,h,size,facing,backplate,form)){
     torso=PoseMesh.Read(layers.ForegroundLayer);
     for(int part=0;part<2;part++){
      int[] source=PoseMesh.Read(layers.DiagnosticLeg(part));var split=new[]{new int[source.Length],new int[source.Length],new int[source.Length]};

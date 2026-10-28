@@ -1,0 +1,12 @@
+0.8.8-preview / approved A2 front head
+Source: art-review-a2-face-v2/a2-face-redesigned.png, byte-identical copy.
+Original artwork produced by the built-in imagegen tool; prompts preserved in prompts.txt.
+No new image generation in the integration step.
+Head image: 1355 x 1161, genuine alpha, crown Y=65, neck Y=1020, center X=675.
+Uniform head scale: 142 / (1020 - 65). Target crown Y=17, neck Y=159, center X=190.
+Both eyes rise 1.5 canonical pixels during runtime import (about 0.95 px at pet size 300).
+Visible blue eye registration: (842,791), then the same upward offset.
+Covered eye follows the visible crescent beneath the approved fringe.
+The original 0.8.2 body import remains. New head replaces rows <164; collar and side-lock blend ends at row 180.
+Rows >=180 remain pixel-identical to 0.8.7. Hair length preservation remains enabled.
+Only the front import and eye registration change. Side views, turn algorithm, bones and animation timelines remain shared.

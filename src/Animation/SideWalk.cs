@@ -4,7 +4,7 @@ namespace JouchoPet {
  // Gait and contact timing retained from 0.5.19; only artwork binding changed.
  sealed class SideWalk : IDisposable {
   readonly WalkArt art;
-  public SideWalk(int w,int h,int petHeight){art=new WalkArt(w,h,petHeight);}
+  public SideWalk(int w,int h,int petHeight,CharacterForm form=CharacterForm.AnemoneI){art=new WalkArt(w,h,petHeight,form);}
   public struct Foot { public double X,Lift; public bool Planted; }
   public const double Stance=0.70;
   public const double LegHeightRatio=0.34;

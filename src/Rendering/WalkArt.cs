@@ -12,15 +12,17 @@ namespace JouchoPet {
   readonly int[,][] legPixels=new int[2,2][];
   readonly CarryArmRig[] carryArms=new CarryArmRig[2];
   readonly Bitmap canvas,warped,runLeg;
-  readonly int width,height;readonly double size;
+  readonly CharacterForm form; readonly int width,height;readonly double size;
   static readonly PointF[][] LegBoundary={
    new[]{new PointF(143,311),new PointF(177,317),new PointF(199,358),new PointF(200,411),new PointF(210,435),new PointF(210,455),new PointF(103,455),new PointF(105,425),new PointF(133,407)},
-   new[]{new PointF(1603,308),new PointF(1644,316),new PointF(1650,410),new PointF(1671,438),new PointF(1667,455),new PointF(1577,455),new PointF(1577,428),new PointF(1598,410)}
+   // Follow the exposed thigh/boot edge below the diagonal front flap. The old
+   // 1603,308 -> 1644,316 edge cut a triangle out of the coat in both forms.
+   new[]{new PointF(1603,347),new PointF(1620,334),new PointF(1644,321),new PointF(1650,410),new PointF(1671,438),new PointF(1667,455),new PointF(1577,455),new PointF(1577,428),new PointF(1598,410)}
   };
-  public WalkArt(int w,int h,int petHeight) {
+  public WalkArt(int w,int h,int petHeight,CharacterForm form=CharacterForm.AnemoneI) { this.form=form;
    width=w;height=h;size=petHeight;canvas=new Bitmap(w,h,PixelFormat.Format32bppPArgb);warped=new Bitmap(w,h,PixelFormat.Format32bppPArgb);runLeg=new Bitmap(w,h,PixelFormat.Format32bppPArgb);
    try {
-    for(int d=0;d<2;d++)using(Bitmap source=CharacterArt.Load(d==0?"profile-left":"profile-right"))using(var path=new GraphicsPath()) {
+    for(int d=0;d<2;d++)using(Bitmap source=CharacterArt.Load(d==0?"profile-left":"profile-right",form))using(var path=new GraphicsPath()) {
      var pose=(CharacterArt.Pose)source.Tag;path.AddPolygon(LegBoundary[d]);
      RectangleF legBounds=path.GetBounds();legBounds.Inflate(1,1);
      int sw=source.Width,sh=source.Height;int[] all=new int[sw*sh];var data=source.LockBits(new Rectangle(0,0,sw,sh),ImageLockMode.ReadOnly,PixelFormat.Format32bppArgb);
@@ -41,7 +43,7 @@ namespace JouchoPet {
     }
     // Occluded leg surfaces cannot be recovered by slicing an overlapping pose.
     // Use complete direction-specific painted layers; the gait remains unchanged.
-    using(Bitmap legs=AssetStore.Image("v064/walk-legs.png")) {
+    using(Bitmap legs=AssetStore.Image("v064/walk-legs.png",form)) {
      Rectangle[] cuts={new Rectangle(233,31,237,584),new Rectangle(752,30,241,584),new Rectangle(229,688,248,580),new Rectangle(744,691,244,578)};
      int[,] index={{2,0},{3,1}};
      for(int d=0;d<2;d++)for(int p=1;p<=2;p++)using(Bitmap leg=legs.Clone(cuts[index[d,p-1]],PixelFormat.Format32bppArgb)) {
@@ -91,7 +93,7 @@ namespace JouchoPet {
    }return canvas;
   }
   CarryArmRig ArmRig(int d) {
-   if(carryArms[d]==null)carryArms[d]=new CarryArmRig(d,layers[d,0],size);
+   if(carryArms[d]==null)carryArms[d]=new CarryArmRig(d,layers[d,0],size,form);
    return carryArms[d];
   }
   public Bitmap DrawLeap(int facing,LeapPose pose,double carry=0,double effort=0,double vertical=0) {
@@ -103,7 +105,8 @@ namespace JouchoPet {
    var far=new SideWalk.Foot{X=-size*(.022*pose.Reach+.035*pose.Air),Lift=size*.085*pose.Air};
    using(Graphics g=Graphics.FromImage(canvas)) {
     g.Clear(Color.Transparent);g.InterpolationMode=InterpolationMode.HighQualityBicubic;
-    DrawPetals(g,ground,pose);
+    if(form==CharacterForm.AnemoneII)LeapFeathers.Draw(g,width,size,ground,pose);
+    else DrawPetals(g,ground,pose);
     DrawRunningLeg(g,legPixels[d,0],far,facing,1,hip,ground,rise,1,size*.04*pose.Crouch);
     DrawRunningLeg(g,legPixels[d,1],near,facing,1,hip,ground,rise,1,size*.04*pose.Crouch);
     bool holding=carry>0 || effort>0;
@@ -172,7 +175,7 @@ namespace JouchoPet {
   static double Smooth(double t){t=Math.Max(0,Math.Min(1,t));return t*t*(3-2*t);}
   unsafe Bitmap Arms(int d,double phase,double walking,int facing,double carry,double effort,double vertical) {
    if(carry>0 || effort>0) {
-    if(carryArms[d]==null)carryArms[d]=new CarryArmRig(d,layers[d,0],size);
+    if(carryArms[d]==null)carryArms[d]=new CarryArmRig(d,layers[d,0],size,form);
     return carryArms[d].Draw(carry,effort,vertical);
    }
    if(walking<.001 && carry<.001 && effort<.001)return layers[d,0];

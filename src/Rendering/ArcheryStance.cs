@@ -17,13 +17,13 @@ namespace JouchoPet {
   readonly Bitmap original,foreground,canvas,legCanvas;
   readonly Bitmap[] legs=new Bitmap[2];readonly int[][] legPixels=new int[2][];
   readonly int[] originalPixels;
-  internal ArcheryStance(int w,int h,double s,int facing,Bitmap backplate) {
+  internal ArcheryStance(int w,int h,double s,int facing,Bitmap backplate,CharacterForm form=CharacterForm.AnemoneI) {
    width=w;height=h;size=s;direction=facing<=0?-1:1;hip=28+s*(.98-SideWalk.LegHeightRatio);ground=28+s*.98;
    original=(Bitmap)backplate.Clone();originalPixels=Read(original);
    canvas=new Bitmap(w,h,PixelFormat.Format32bppPArgb);legCanvas=new Bitmap(w,h,PixelFormat.Format32bppPArgb);
    try {
     int d=direction<0?0:1;
-    using(var atlas=AssetStore.Image("v064/walk-legs.png"))for(int part=0;part<2;part++)using(var painted=atlas.Clone(LegCuts[LegIndex[d,part]],PixelFormat.Format32bppArgb)) {
+    using(var atlas=AssetStore.Image("v064/walk-legs.png",form))for(int part=0;part<2;part++)using(var painted=atlas.Clone(LegCuts[LegIndex[d,part]],PixelFormat.Format32bppArgb)) {
      legs[part]=new Bitmap(w,h,PixelFormat.Format32bppPArgb);
      double legHeight=s*SideWalk.LegHeightRatio,legWidth=painted.Width*legHeight/painted.Height,pivot=d==0?.70:.30,center=w*.5+(part==0?-1:1)*s*.012;
      using(var g=Graphics.FromImage(legs[part])) {g.InterpolationMode=InterpolationMode.HighQualityBicubic;g.DrawImage(painted,new RectangleF((float)(center-legWidth*pivot),(float)(ground-legHeight),(float)legWidth,(float)legHeight));}
@@ -31,7 +31,7 @@ namespace JouchoPet {
     }
     // Recover only the original foreground alpha, retaining the supplied coat
     // backplate (including its arm removal) and every original hair/skirt edge.
-    using(var torso=Torso(d))using(var restLegs=new Bitmap(w,h,PixelFormat.Format32bppPArgb)) {
+    using(var torso=Torso(d,form))using(var restLegs=new Bitmap(w,h,PixelFormat.Format32bppPArgb)) {
      using(var g=Graphics.FromImage(restLegs)){g.DrawImageUnscaled(legs[0],0,0);g.DrawImageUnscaled(legs[1],0,0);}
      int[] mask=Read(torso),below=Read(restLegs),pixels=(int[])originalPixels.Clone();
      for(int y=(int)Math.Floor(hip);y<h;y++)for(int x=0;x<w;x++) {
@@ -47,8 +47,8 @@ namespace JouchoPet {
     }
    }catch{Dispose();throw;}
   }
-  Bitmap Torso(int d) {
-   using(var source=CharacterArt.Load(d==0?"profile-left":"profile-right"))using(var path=new GraphicsPath()) {
+  Bitmap Torso(int d,CharacterForm form) {
+   using(var source=CharacterArt.Load(d==0?"profile-left":"profile-right",form))using(var path=new GraphicsPath()) {
     var definition=(CharacterArt.Pose)source.Tag;path.AddPolygon(LegBoundary[d]);
     RectangleF legBounds=path.GetBounds();legBounds.Inflate(1,1);
     var pixels=Read(source);

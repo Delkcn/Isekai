@@ -12,6 +12,7 @@ namespace JouchoPet {
   MagicBolt castBolt;SwordOverlay castBodyOverlay;CastingOverlay castFlightOverlay;
   Point castLocation;Rectangle castDesktop;string castDisplayLayout;bool castAnchored,castEffects=true;
   DesktopFileTarget castFileTarget;string selectedCastFile;bool choosingCastFile;double castTargetPoll;
+  readonly HitFileOpen castFileOpen=new HitFileOpen(new ShellFileOpener());
   ToolStripMenuItem castFileStatus,castAgain;
   bool CastBusy{get{return choosingCastFile||casting.Busy||castBolt!=null;}}
   public event EventHandler<ProjectileHitEventArgs> ProjectileHit;
@@ -38,7 +39,7 @@ namespace JouchoPet {
   public Guid CastFile(string path){
    if(InvokeRequired)throw new InvalidOperationException("CastFile must run on the desktop UI thread.");
    DesktopFileTarget target=DesktopFileTarget.Open(path);
-   try{Guid id=Cast(target.Position);castFileTarget=target;castTargetPoll=0;selectedCastFile=path;if(castFileStatus!=null)castFileStatus.Text="锁定："+Path.GetFileName(path);return id;}
+   try{Guid id=Cast(target.Position);castFileTarget=target;castFileOpen.Arm(target);castTargetPoll=0;selectedCastFile=path;if(castFileStatus!=null)castFileStatus.Text="锁定："+Path.GetFileName(path);return id;}
    catch{target.Dispose();throw;}
   }
   bool ValidateCastFile(){
@@ -46,13 +47,13 @@ namespace JouchoPet {
    try{if(castFileTarget.Valid())return true;}catch(Exception ex){Trace.WriteLine("Cast target: "+ex.Message);}
    if(castFileStatus!=null)castFileStatus.Text="施法取消：目标文件已消失或图标位置改变";CancelCast();return false;
   }
-  void ReleaseCastFile(){var target=castFileTarget;castFileTarget=null;if(target!=null)try{target.Dispose();}catch(Exception ex){Trace.WriteLine("Cast target cleanup: "+ex.Message);}}
+  void ReleaseCastFile(){castFileOpen.Cancel();var target=castFileTarget;castFileTarget=null;if(target!=null)try{target.Dispose();}catch(Exception ex){Trace.WriteLine("Cast target cleanup: "+ex.Message);}}
   void DemoCast(int facing){Rectangle r=Screen.FromControl(this).WorkingArea;Cast(new PointF(Math.Max(r.Left+12,Math.Min(r.Right-12,Left+Width*.5f+facing*petHeight*1.6f)),Top+petHeight*.45f));}
   public Guid Cast(PointF targetPosition){
    if(InvokeRequired)throw new InvalidOperationException("Cast must be dispatched on the desktop UI thread.");
    CastingMotion.Validate(targetPosition);Rectangle desktop=SystemInformation.VirtualScreen;
    if(targetPosition.X<desktop.Left||targetPosition.X>=desktop.Right||targetPosition.Y<desktop.Top||targetPosition.Y>=desktop.Bottom)throw new ArgumentException("Target must be inside the virtual desktop.");
-   CancelCast();CancelSword();CancelArchery();CancelLeap();CancelCarry();greeting.Cancel();rest.RequestSleep(false);
+   CancelUtilityAction();CancelCast();CancelSword();CancelArchery();CancelLeap();CancelCarry();greeting.Cancel();rest.RequestSleep(false);
    sleeping=false;sleepItem.Checked=false;walking=running=false;happyUntil=DateTime.MinValue;lastInput=DateTime.UtcNow;
    if(bubble!=null)bubble.Dismiss();
    castRequestTop=Top;castRequestLayout=DisplayLayout();
@@ -113,8 +114,9 @@ namespace JouchoPet {
   }
   static string DisplayLayout(){string result="";foreach(var screen in Screen.AllScreens)result+=screen.DeviceName+screen.Bounds.ToString();return result;}
   void RecordProjectileHit(object sender,ProjectileHitEventArgs e){
+   if(castBolt==null||sender!=castBolt||e.RequestId!=casting.Id||castBolt.Cancelled)return;
    if(!ValidateCastFile())return;
-   if(castFileTarget!=null){ReleaseCastFile();if(castFileStatus!=null)castFileStatus.Text="已命中："+Path.GetFileName(e.TargetFile);}
+   if(castFileTarget!=null){var result=castFileOpen.Hit();ReleaseCastFile();if(result!=null){string message=result.Success?"已命中并请求打开："+Path.GetFileName(e.TargetFile):"已命中，打开失败："+result.Error;if(castFileStatus!=null)castFileStatus.Text=message;if(!result.Success)tray.ShowBalloonTip(5000,"打开文件",message,ToolTipIcon.Info);}}
    LastProjectileHit=e;
    string line=DateTime.UtcNow.ToString("o")+" ProjectileHit "+e.RequestId+" target="+e.TargetPosition+" file="+e.TargetFile;
    Trace.WriteLine(line);
@@ -145,7 +147,7 @@ namespace JouchoPet {
   }
   void RenderCast(){
    if(castBodyOverlay==null||castBodyOverlay.IsDisposed)castBodyOverlay=new SwordOverlay();
-   Bitmap full=renderer.DrawCast(casting.Pose,castEffects);
+   Bitmap full=DrawForm(r=>r.DrawCast(casting.Pose,castEffects));
    Native.Present(Handle,castBodyOverlay.Present(full,Location,ClientSize,renderer.CastPadding,TopMost),Left,Top);
    RenderCastFlight();FollowSpeech();
   }

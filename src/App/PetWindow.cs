@@ -7,7 +7,7 @@ namespace JouchoPet
 {
     sealed partial class Pet : Form
     {
-        readonly PetRenderer renderer;
+        PetRenderer renderer;
         readonly FrameClock timer;
         readonly FrameStatistics frameStatistics = new FrameStatistics();
         readonly Random random = new Random();
@@ -37,8 +37,12 @@ namespace JouchoPet
             chat.Show();
             chat.Activate();
         }
-        public Pet()
+        public Pet():this(null){}
+        // Diagnostics exercise the real event handlers without a tray icon or
+        // reading/writing the user's settings. The window is never shown there.
+        internal Pet(string diagnosticSettings)
         {
+            if(diagnosticSettings!=null)settings=diagnosticSettings;
             AnimationParameters.UseFixedValues();
             motion.SelectLightTurn=delegate{return random.NextDouble()*100<AnimationParameters.Get("turnChance");};
             timer = new FrameClock(this);
@@ -66,7 +70,7 @@ namespace JouchoPet
                 TopMost = !TopMost; topItem.Checked = TopMost; SaveSettings();
             });
             topItem.Checked = TopMost;
-            menu.Items.Add("Isekaijoucho / Anemone I").Enabled = false;
+            characterTitle=menu.Items.Add("Isekaijoucho / Anemone I");characterTitle.Enabled=false;
             menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add("对话 / 文件助手...", null, delegate
             {
@@ -78,7 +82,7 @@ namespace JouchoPet
             });
             menu.Items.Add("偏头问好",null,delegate{Greet();});
             menu.Items.Add("挥手问好",null,delegate{Greet(true);});
-            AddSpeechMenu();
+            AddDailyMenu();AddUtilityMenu();AddSpeechMenu();
             menu.Items.Add("Walk left (preview)", null, delegate
             {
                 StartWalk(-1);
@@ -96,7 +100,7 @@ namespace JouchoPet
             menu.Items.Add("向上轻跃",null,delegate{StartLeap(-1);});
             menu.Items.Add("向下轻落",null,delegate{StartLeap(1);});
             AddArcheryMenu();AddSwordMenu();AddCastingMenu();
-            AddCarryMenu();
+            AddCarryMenu();AddFormMenu();
             menu.Items.Add(wanderItem);
             menu.Items.Add(sleepItem);
             menu.Items.Add(topItem);
@@ -129,7 +133,11 @@ namespace JouchoPet
             });
             menu.Opening += delegate
             {
-                menuOpen = true;
+                // Appearance is available mid-action: opening its menu must not
+                // brake locomotion or pause attack/utility timelines first.
+                menuOpen = false;
+                UpdateFormMenu();
+                RefreshDefenderStatus();
             };
             menu.Closed += delegate
             {
@@ -154,7 +162,7 @@ namespace JouchoPet
             Icon=petIcon;
             tray = new NotifyIcon
             {
-                Icon=petIcon, Text="Isekaijoucho Pet - double-click to find me", ContextMenuStrip=menu, Visible=true
+                Icon=petIcon, Text="Isekaijoucho Pet - double-click to find me", ContextMenuStrip=menu, Visible=diagnosticSettings==null
             };
             tray.DoubleClick += delegate
             {
@@ -163,8 +171,10 @@ namespace JouchoPet
             timer.Tick += Animate;
             Shown += delegate
             {
+                PrepareForms();
                 Render();
                 timer.Start();
+                StartDefender();
                 Say("你来了。\n今天也在这里陪你一会儿。\n想聊天的话，双击我就好。");
             };
             MouseDoubleClick += delegate
@@ -180,7 +190,8 @@ namespace JouchoPet
             };
             FormClosed += delegate
             {
-                CancelCast();CancelSword();CancelArchery();if(magicOverlay!=null)magicOverlay.Dispose();if(swordOverlay!=null)swordOverlay.Dispose();if(castBodyOverlay!=null)castBodyOverlay.Dispose();if(castFlightOverlay!=null)castFlightOverlay.Dispose();
+                StopDefender();
+                CancelUtilityAction();daily.Reset();CancelCast();CancelSword();CancelArchery();if(magicOverlay!=null)magicOverlay.Dispose();if(swordOverlay!=null)swordOverlay.Dispose();if(castBodyOverlay!=null)castBodyOverlay.Dispose();if(castFlightOverlay!=null)castFlightOverlay.Dispose();
                 CancelCarry();
                 if(chat!=null)chat.Close();
                 if(bubble!=null)bubble.Dispose();
@@ -190,7 +201,7 @@ namespace JouchoPet
                 tray.Visible=false;
                 tray.Dispose();
                 menu.Dispose();
-                renderer.Dispose();
+                DisposeUtility();if(formTransition!=null)formTransition.Dispose();else renderer.Dispose();
                 petIcon.Dispose();
             };
         }
@@ -212,14 +223,14 @@ namespace JouchoPet
         }
         void ResizePet()
         {
-            CancelCast();CancelSword();CancelArchery();
+            CancelUtilityAction();daily.Reset();CancelCast();CancelSword();CancelArchery();
             CancelLeap();
             ClientSize=PetRenderer.CanvasSize(petHeight);
-            renderer.Resize(petHeight);
+            if(formTransition==null)renderer.Resize(petHeight);else{formTransition.Resize(petHeight);renderer=formTransition.Current;}
         }
         void RestorePet()
         {
-            CancelCast();CancelSword();CancelArchery();
+            CancelUtilityAction();daily.Reset();CancelCast();CancelSword();CancelArchery();
             CancelLeap();
             CancelCarry();
             Show();

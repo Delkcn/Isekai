@@ -1,0 +1,10 @@
+0.8.2 A2 approved front artwork: front-waist-hair.png.
+Built-in image_gen output: exec-c46a4579-f85a-4255-80f8-d3bdb0b4824c.png.
+Prompt chain: front-prompt.txt -> soft-cheeks-prompt.txt -> full-cheeks-prompt.txt -> waist-hair-prompt.txt.
+Final source keeps the approved eye placement and softer lashes, extends the lower face and mouth, rounds the cheeks, and ends the hair at the lower waist.
+Reference registration remains 1133x1388, center 573, crown 20, neck 425, sole 1320.
+Imported to 380x465, center 190, crown 17, neck 159, sole 462; shared skeleton and animation remain unchanged.
+PreserveFaceRegistration bypasses legacy EyePlacement; blue-eye anchor (646,311) and covered-eye aperture remain as in 0.8.1.
+PreserveHairLength bypasses the old rear-hair compression ONLY for this already-shortened front painting.
+Side and three-quarter art retains the existing HairLength binding. Left/right walking and turning samples were visually checked: hair already ends near the lower waist, so those sources were not edited.
+Earlier drafts are retained in the workspace for provenance, but are not runtime resources or included in the release.

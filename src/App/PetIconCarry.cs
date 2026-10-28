@@ -70,7 +70,7 @@ namespace JouchoPet
                 }}catch(Exception ex){MessageBox.Show(ex.Message,"桌面图标识别");}
             });
             menu.Items.Add("恢复搬动前的图标位置",null,delegate {
-                CancelCarry();carryEnabled=false;carryItem.Checked=false;
+                CancelUtilityAction();CancelCarry();carryEnabled=false;carryItem.Checked=false;
                 try { if(iconPositions==null)iconPositions=new IconPositions();using(var shell=new DesktopIcons())MessageBox.Show(iconPositions.Restore(shell),"图标位置恢复"); }
                 catch(Exception ex){MessageBox.Show(ex.Message,"图标位置恢复");}
                 carryStatus.Text="图标搬运：已关闭";
@@ -78,6 +78,7 @@ namespace JouchoPet
             menu.Items.Add(carryStatus);menu.Items.Add(new ToolStripSeparator());
         }
         void RequestPush(Point axis,bool running=false) {
+            CancelUtilityAction();
             CancelCast();CancelSword();CancelArchery();
             CancelLeap();
             if(!carryEnabled){MessageBox.Show("请先开启“允许搬动桌面图标”。");return;}

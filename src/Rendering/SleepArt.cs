@@ -12,7 +12,7 @@ namespace JouchoPet {
   static readonly double[] Sole={484,484,484,484,875,871,873,873};
   static readonly double[] Anchor={245,684,1110,1549,249,690,1105,1555};
   static readonly double[] Top={0,.03,.09,.20,.28,.30,.31,.31};
-  public static PoseMesh.Pose Key(Bitmap sheet,int index,int w,int h,double size) {
+  public static PoseMesh.Pose Key(Bitmap sheet,int index,int w,int h,double size,CharacterForm form=CharacterForm.AnemoneI) {
    int top=index<4?0:487;var bounds=new Rectangle(Left[index],top,Right[index]-Left[index],index<4?487:400);
    using(Bitmap source=sheet.Clone(bounds,PixelFormat.Format32bppArgb))using(var output=new Bitmap(w,h,PixelFormat.Format32bppPArgb)) {
     // Isolated export specks must not become silhouette landmarks in PoseMesh.
@@ -33,7 +33,7 @@ namespace JouchoPet {
       g.DrawImage(source,new RectangleF((float)(w*.5+(bounds.X-Anchor[index])*scale),y,(float)(bounds.Width*scale),1),new RectangleF(0,(float)(a-top),bounds.Width,(float)Math.Min(b-a,Sole[index]+1-a)),GraphicsUnit.Pixel);
      }
     }
-    HairPalette.Match(output,size,Top[index]);
+    HairPalette.Match(output,size,Top[index],form);
     HairLength.ApplySleep(output,index,size,Top[index],Neck[index],Crown[index],Sole[index],Anchor[index]);
     double[] rows=new double[13],headRows={-.06,.08,.38,.56,.78,1};
     for(int i=0;i<6;i++)rows[i]=28+size*(Top[index]+headRows[i]*head);

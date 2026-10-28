@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 
 namespace JouchoPet
@@ -20,12 +20,16 @@ namespace JouchoPet
         public double TurnProgress,TurnFrom;
         public bool Archery;
         public ArcheryPose BowPose;
+        public DailyPose Daily;
     }
 
     // Owns sprite and rig lifetimes; the window only chooses when/where to draw.
     sealed class PetRenderer : IDisposable
     {
-        readonly Bitmap[] sprites = SpriteAssets.LoadFront();
+        readonly Bitmap[] sprites;
+        internal readonly CharacterForm Form;
+        public PetRenderer():this(CharacterForm.AnemoneI){} 
+        internal PetRenderer(CharacterForm form){CharacterForms.CheckResources(form);Form=form;sprites=SpriteAssets.LoadFront(form);}
         static readonly double[] NeutralPose = { 1, 0, 0 };
         SoftRig front;
         SideWalk side;
@@ -34,6 +38,10 @@ namespace JouchoPet
         ArcheryRig archer;
         SwordRig swordsman;
         CastingRig caster;
+        ReachRig reach;int currentHeight;
+        internal ReachRig Reach {get{if(reach==null)reach=new ReachRig(CanvasSize(currentHeight).Width,CanvasSize(currentHeight).Height,currentHeight,side,Form);return reach;}}
+        internal PointF SigilAnchor {get{return front.SigilAnchor;}}
+        internal RectangleF SigilFace {get{return front.SigilFace;}}
         internal int CastPadding{get{return caster.Padding;}}
         internal Bitmap DrawCast(CastPose p,bool effects=true){return caster.Draw(p,effects);}
         internal bool ResolveCastAim(PointF target,int facing,out double aim){return caster.ResolveAim(target,facing,out aim);}
@@ -42,11 +50,31 @@ namespace JouchoPet
         internal SlashSkeleton.Pose CastBones(CastPose p){return caster.Sample(p);}
         internal int SwordPadding {get{return swordsman.Padding;}}
         internal Bitmap DrawSword(SwordPose pose,bool effects=true){return swordsman.Draw(pose,effects);}
+        internal PointF[] SwordBlade(SwordPose pose){return swordsman.Blade(pose);}
+        internal PointF SampleSigilAnchor(double time){return front.SampleSigilAnchor(time);}
         public double LastArcheryJacobian {get{return archer==null?1:archer.MinimumArea;}}
 
         public double LastRestJacobian { get { return rest==null?1:rest.LastMinimumJacobian; } }
 
         public bool Ready { get { return front != null; } }
+
+        // Build the replacement completely before releasing the visible character.
+        internal static bool TryReplace(ref PetRenderer current,CharacterForm form,int height,out string error)
+        {
+            error=null;PetRenderer candidate=null;
+            try {
+                CharacterForms.Validate(form);
+                if(current!=null && current.Form==form && current.Ready)return true;
+                candidate=new PetRenderer(form);candidate.Resize(height);
+                // Warm the arm / lookout layers that otherwise load on their first action.
+                candidate.Draw(new RenderFrame{MotionState="idle",Greeting=1,WaveBlend=1,WavePhase=.5});
+                candidate.Reach.DrawLookout(-1,1);candidate.Reach.DrawLookout(1,1);
+            } catch(Exception ex) {
+                if(candidate!=null)candidate.Dispose();error=ex.Message;return false;
+            }
+            PetRenderer previous=current;current=candidate;
+            if(previous!=null)previous.Dispose();return true;
+        }
 
         public static Size CanvasSize(int petHeight)
         {
@@ -67,14 +95,14 @@ namespace JouchoPet
             CastingRig newCaster = null;
             try
             {
-                newFront = new SoftRig(sprites, canvas.Width, canvas.Height, petHeight);
-                newSide = new SideWalk(canvas.Width, canvas.Height, petHeight);
-                newRest = new RestRig(sprites, canvas.Width, canvas.Height, petHeight, newFront.Draw(0, 0, 0, 0, 0, 0, 0, NeutralPose));
-                newTurn = new TurnRig(canvas.Width, canvas.Height, petHeight);
+                newFront = new SoftRig(sprites, canvas.Width, canvas.Height, petHeight,Form);
+                newSide = new SideWalk(canvas.Width, canvas.Height, petHeight,Form);
+                newRest = new RestRig(sprites, canvas.Width, canvas.Height, petHeight, newFront.Draw(0, 0, 0, 0, 0, 0, 0, NeutralPose),Form);
+                newTurn = new TurnRig(canvas.Width, canvas.Height, petHeight,Form);
                 newTurn.Prepare(newFront.Draw(0, 0, 0, 0, 0, 0, 0, NeutralPose), newSide);
-                newArcher = new ArcheryRig(canvas.Width,canvas.Height,petHeight,newSide);
-                newSword = new SwordRig(canvas.Width,canvas.Height,petHeight,newSide);
-                newCaster = new CastingRig(canvas.Width,canvas.Height,petHeight,newSide);
+                newArcher = new ArcheryRig(canvas.Width,canvas.Height,petHeight,newSide,Form);
+                newSword = new SwordRig(canvas.Width,canvas.Height,petHeight,newSide,Form);
+                newCaster = new CastingRig(canvas.Width,canvas.Height,petHeight,newSide,Form);
             }
             catch
             {
@@ -88,7 +116,7 @@ namespace JouchoPet
                 throw;
             }
             DisposeRigs();
-            swordsman=newSword;caster=newCaster;
+            swordsman=newSword;caster=newCaster;currentHeight=petHeight;
             front = newFront;
             side = newSide;
             turn = newTurn;
@@ -108,7 +136,11 @@ namespace JouchoPet
 
             if (frame.MotionState == "turn")
             {
-                Bitmap neutral = front.Draw(0, 0, 0, 0, 0, 0, 0, NeutralPose);
+                // Prepare already owns the neutral material. Away from the exact
+                // front endpoint, either prepared turn reuses its owned material.
+                // Avoid a second, unused face render at the higher turn cadence.
+                bool preparedTurn = Math.Abs(frame.Angle)>=.0000001 && turn.MaterialCount>0;
+                Bitmap neutral = preparedTurn?null:front.Draw(0, 0, 0, 0, 0, 0, 0, NeutralPose);
                 return frame.LightTurn?turn.DrawLight(frame.Angle,neutral,side,frame.Time,frame.TurnProgress,frame.TurnFrom,frame.SupportNear):turn.Draw(frame.Angle, neutral, side, frame.Time);
             }
             if (frame.Facing != 0)
@@ -123,12 +155,13 @@ namespace JouchoPet
                 frame.LookY * awake + nod,
                 frame.Lean * awake, quietBlink, NeutralPose,
                 affection, frame.Greeting>frame.Affection?0:frame.PatSide, closedEyes,
-                frame.Greeting*awake*(1-waveBlend),frame.WavePhase,frame.Greeting*awake*waveBlend);
+                frame.Greeting*awake*(1-waveBlend),frame.WavePhase,frame.Greeting*awake*waveBlend,frame.Daily);
             return rest.Draw(posed, frame.RestAmount);
         }
 
         void DisposeRigs()
         {
+            if(reach!=null){reach.Dispose();reach=null;}
             if (caster != null){caster.Dispose();caster=null;}
             if (front != null) front.Dispose();
             if (side != null) side.Dispose();

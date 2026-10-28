@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -10,19 +10,19 @@ namespace JouchoPet {
   readonly JointArm[] arms=new JointArm[2];readonly Bitmap palm,canvas,handLayer;
   internal struct ArmNodes {internal PointF Shoulder,Elbow,Wrist,Grip;internal double Angle,UpperLength,LowerLength,Bend;}
   readonly double size;internal readonly int Padding;
-  internal CastingRig(int w,int h,double s,SideWalk sides){
+  internal CastingRig(int w,int h,double s,SideWalk sides,CharacterForm form=CharacterForm.AnemoneI){
    size=s;Padding=(int)Math.Ceiling(s*.3);
    canvas=new Bitmap(w+2*Padding,h+2*Padding,PixelFormat.Format32bppPArgb);
    handLayer=new Bitmap(canvas.Width,canvas.Height,PixelFormat.Format32bppPArgb);
    for(int d=0;d<2;d++){
     neutral[d]=(Bitmap)sides.Draw(0,0,0,d==0?-1:1,1).Clone();
-    using(var cut=new CarryArmRig(d,neutral[d],s)){
+    using(var cut=new CarryArmRig(d,neutral[d],s,form)){
      body[d]=RigParts.BitmapOf(cut.DiagnosticBackplate,w,h);
      var def=CharacterArt.Definition(d==0?"profile-left":"profile-right");
      arms[d]=new JointArm(cut.DiagnosticArm,w,h,s,cut.Shoulder,cut.Elbow,cut.Wrist,new PointF(cut.Wrist.X,(float)CharacterArt.Y(def,d==0?311:313,s)));
     }
    }
-   for(int d=0;d<2;d++){bones[d]=new SlashSkeleton(w,s,d==0?-1:1,arms[1]);skin[d]=new SlashBodyRig(w,h,s,d==0?-1:1,body[d],bones[d]);}
+   for(int d=0;d<2;d++){bones[d]=new SlashSkeleton(w,s,d==0?-1:1,arms[1]);skin[d]=new SlashBodyRig(w,h,s,d==0?-1:1,body[d],bones[d],form);}
    using(var source=AssetStore.Image("v0618/greeting-palm.png")){
     int l=source.Width,t=source.Height,r=0,b=0;int[] pixels=PoseMesh.Read(source);
     for(int y=0;y<source.Height;y++)for(int x=0;x<source.Width;x++)if((uint)pixels[y*source.Width+x]>>24>32){l=Math.Min(l,x);r=Math.Max(r,x);t=Math.Min(t,y);b=Math.Max(b,y);}

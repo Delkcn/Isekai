@@ -14,6 +14,7 @@ namespace JouchoPet
                 if(s.Length>1) wandering=s[1]=="True";
                 if(s.Length>2) TopMost=s[2]=="True";
                 if(s.Length>3)bubblesEnabled=s[3]!="False";
+                if(s.Length>4)defenderEnabled=s[4]!="False";
             }
             catch(IOException)
             {
@@ -29,7 +30,7 @@ namespace JouchoPet
                 Directory.CreateDirectory(Path.GetDirectoryName(settings));
                 File.WriteAllLines(settings,new string[]
                 {
-                    petHeight.ToString(),wandering.ToString(),TopMost.ToString(),bubblesEnabled.ToString()
+                    petHeight.ToString(),wandering.ToString(),TopMost.ToString(),bubblesEnabled.ToString(),defenderEnabled.ToString()
                 });
             }
             catch(IOException)

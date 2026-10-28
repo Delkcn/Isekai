@@ -25,7 +25,7 @@ namespace JouchoPet {
    }
    return File.ReadAllBytes(Path.Combine(root,"assets",name));
   }
-  public static Bitmap Image(string name) {
+  public static Bitmap Image(string name,CharacterForm form=CharacterForm.AnemoneI) { name=CharacterForms.Resource(name,form);
    using(var stream=new MemoryStream(Read(name)))using(var source=new Bitmap(stream)) {
     var result=new Bitmap(source.Width,source.Height,PixelFormat.Format32bppArgb);
     var rect=new Rectangle(0,0,source.Width,source.Height);
@@ -39,8 +39,8 @@ namespace JouchoPet {
    }
   }
   public static string[] Lines(string name){return Encoding.UTF8.GetString(Read(name)).Split(new[]{'\r','\n'},StringSplitOptions.RemoveEmptyEntries);}
-  public static Bitmap TurnView(string name) {
-   return CharacterArt.Load(name);
+  public static Bitmap TurnView(string name,CharacterForm form=CharacterForm.AnemoneI) {
+   return CharacterArt.Load(name,form);
   }
  }
 }

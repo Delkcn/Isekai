@@ -5,3 +5,7 @@ dist/
 .env*
 *Check.exe
 SwordPreview.exe
+
+# Local diagnostic state, never part of published source
+qa/**/runtime/
+

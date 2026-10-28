@@ -11,17 +11,18 @@ namespace JouchoPet {
   readonly double unit;
   readonly PointF shoulder,elbow,wrist,tip;
   readonly int width,height;
+  PaintedSwordArt fistArt;
   internal PointF Shoulder {get{return shoulder;}}
   internal PointF Elbow {get{return elbow;}}
   internal Bitmap DiagnosticElbowCap {get{return elbowCap;}}
-  public GreetingArmRig(int[] original,int w,int h,double size) {
+  public GreetingArmRig(int[] original,int w,int h,double size,CharacterForm form=CharacterForm.AnemoneI) {
    width=w;height=h;unit=size;canvas=new Bitmap(w,h,PixelFormat.Format32bppPArgb);
    var pose=CharacterArt.Definition("front");double scale=CharacterArt.Scale(pose,size);
    Func<double,double,PointF> map=(x,y)=>new PointF((float)(w*.5+(x-190)*scale),(float)CharacterArt.Y(pose,y,size));
    shoulder=map(160,207);elbow=map(145,258);wrist=map(134,292);tip=map(130,308);
    PointF[] edge={map(158,193),map(170,204),map(166,221),map(159,237),map(152,262),map(148,272),map(147,288),map(139,296),map(136,309),map(128,318),map(122,307),map(123,292),map(124,283),map(128,266),map(137,244),map(140,233),map(137,224),map(143,214),map(151,208)};
    int[] background=(int[])original.Clone(),up=new int[original.Length],down=new int[original.Length],palm=new int[original.Length];
-   using(var generated=AssetStore.Image("v0616/greeting-underlay.png"))
+   using(var generated=AssetStore.Image("v0616/greeting-underlay.png",form))
    using(var source=new Bitmap(380,465,PixelFormat.Format32bppArgb)) {
     using(var g=Graphics.FromImage(source)){g.InterpolationMode=InterpolationMode.HighQualityBicubic;g.DrawImage(generated,new Rectangle(0,0,380,465));}
     source.Tag=pose;
@@ -76,7 +77,56 @@ namespace JouchoPet {
   }
   internal struct ArmPose {
    public PointF Shoulder,Elbow,Wrist,Tip;
-   public double UpperAngle,ForearmAngle,HandAngle,ForearmDepth;
+   public double UpperAngle,ForearmAngle,HandAngle,ForearmDepth,UpperDepth;
+  }
+  internal Bitmap HairBackground {get{return plate;}}
+  internal PointF HairContact(double stroke) {
+   var p=CharacterArt.Definition("front");double s=CharacterArt.Scale(p,unit);
+   return new PointF((float)(width*.5+(150+2*stroke-190)*s),(float)CharacterArt.Y(p,104+5*stroke,unit));
+  }
+  // Upper arm points toward the viewer; elbow sits beneath the wrist.
+  // The original bone length is retained in depth throughout scalp contact.
+  internal ArmPose HairSample(double lift,double stroke,Func<PointF,PointF> headMap,double breath) {
+   PointF root=RigParts.Add(shoulder,0,-breath*.2),contact=headMap(HairContact(stroke));
+   double handLength=RigParts.Length(wrist,tip),u=RigParts.Length(shoulder,elbow),l=RigParts.Length(elbow,wrist);
+   double handTarget=-Math.PI*.5;
+   PointF goal=RigParts.Add(contact,-Math.Cos(handTarget)*handLength,-Math.Sin(handTarget)*handLength),bend=RigParts.Add(goal,0,l);
+   double a0=Math.Atan2(elbow.Y-shoulder.Y,elbow.X-shoulder.X),b0=Math.Atan2(wrist.Y-elbow.Y,wrist.X-elbow.X),c0=Math.Atan2(tip.Y-wrist.Y,tip.X-wrist.X);
+   double a=Math.Atan2(bend.Y-root.Y,bend.X-root.X);while(a<a0)a+=2*Math.PI;
+   double b=-Math.PI*.5,c=handTarget;
+   // Follow the inward fold across the chest, not the outward angle wrap.
+   // Lift the upper arm mostly into depth before the forearm finishes folding.
+   double projected=u+(RigParts.Length(root,bend)-u)*DailyMotion.Ease(Math.Min(1,lift*1.8));
+   a=a0+(a-a0)*lift;b=b0+(b-b0)*lift;c=c0+(c-c0)*lift;
+   PointF e=RigParts.Add(root,projected*Math.Cos(a),projected*Math.Sin(a)),w=RigParts.Add(e,l*Math.Cos(b),l*Math.Sin(b)),f=RigParts.Add(w,handLength*Math.Cos(c),handLength*Math.Sin(c));
+   return new ArmPose{Shoulder=root,Elbow=e,Wrist=w,Tip=f,UpperAngle=(a-a0)*180/Math.PI,ForearmAngle=(b-b0)*180/Math.PI,HandAngle=(c-c0)*180/Math.PI,UpperDepth=Math.Sqrt(Math.Max(0,u*u-projected*projected))};
+  }
+  internal ArmPose SigilSample(double amount,double breath){
+   double u=RigParts.Length(shoulder,elbow),l=RigParts.Length(elbow,wrist),h=RigParts.Length(wrist,tip);
+   double a0=Math.Atan2(elbow.Y-shoulder.Y,elbow.X-shoulder.X),b0=Math.Atan2(wrist.Y-elbow.Y,wrist.X-elbow.X),c0=Math.Atan2(tip.Y-wrist.Y,tip.X-wrist.X);
+   // Preserve the accepted held fist anchor. Keep the upper-arm direction at rest,
+   // using existing projection depth and a small wrist bend instead of shoulder rotation.
+   double gx=u*Math.Cos(.90)+(l+h*.65)*Math.Cos(-1.90),gy=u*Math.Sin(.90)+(l+h*.65)*Math.Sin(-1.90);
+   double wristBend=-.25,vx=l+h*.65*Math.Cos(wristBend),vy=h*.65*Math.Sin(wristBend),reach=Math.Sqrt(vx*vx+vy*vy);
+   double dot=gx*Math.Cos(a0)+gy*Math.Sin(a0),cross=gx*Math.Sin(a0)-gy*Math.Cos(a0);
+   double heldProjection=dot+Math.Sqrt(Math.Max(0,reach*reach-cross*cross));
+   double ex=heldProjection*Math.Cos(a0),ey=heldProjection*Math.Sin(a0),heldB=Math.Atan2(gy-ey,gx-ex)-Math.Atan2(vy,vx);
+   double projected=u+(heldProjection-u)*amount,b=b0+(heldB-b0)*amount,c=c0+(heldB+wristBend-c0)*amount;
+   PointF root=RigParts.Add(shoulder,0,-breath*.2),e=RigParts.Add(root,projected*Math.Cos(a0),projected*Math.Sin(a0)),w=RigParts.Add(e,l*Math.Cos(b),l*Math.Sin(b));
+   return new ArmPose{Shoulder=root,Elbow=e,Wrist=w,Tip=RigParts.Add(w,h*Math.Cos(c),h*Math.Sin(c)),UpperAngle=0,ForearmAngle=(b-b0)*180/Math.PI,HandAngle=(c-c0)*180/Math.PI,UpperDepth=Math.Sqrt(Math.Max(0,u*u-projected*projected))};
+  }
+  internal void DrawHairArm(Graphics g,ArmPose p,double lift,double fist=0,double openHandScale=1) {
+   g.InterpolationMode=InterpolationMode.HighQualityBicubic;
+   double length=RigParts.Length(shoulder,elbow),ux=(elbow.X-shoulder.X)/length,uy=(elbow.Y-shoulder.Y)/length;
+   double vx=(p.Elbow.X-p.Shoulder.X)/length,vy=(p.Elbow.Y-p.Shoulder.Y)/length,n=Math.Sqrt(vx*vx+vy*vy);
+   double px=-vy/n,py=vx/n,m11=vx*ux-px*uy,m12=vy*ux-py*uy,m21=vx*uy+px*ux,m22=vy*uy+py*ux;
+   var saved=g.Save();
+   using(var matrix=new Matrix((float)m11,(float)m12,(float)m21,(float)m22,(float)(p.Shoulder.X-m11*shoulder.X-m21*shoulder.Y),(float)(p.Shoulder.Y-m12*shoulder.X-m22*shoulder.Y))) {g.Transform=matrix;g.DrawImageUnscaled(upper,0,0);}
+   g.Restore(saved);
+   saved=g.Save();g.TranslateTransform(p.Elbow.X,p.Elbow.Y);g.RotateTransform((float)p.UpperAngle);g.TranslateTransform(-elbow.X,-elbow.Y);DrawAlpha(g,elbowCap,new RectangleF(0,0,width,height),Math.Min(1,lift*4));g.Restore(saved);
+   DrawForearm(g,p);
+   saved=g.Save();g.TranslateTransform(p.Wrist.X,p.Wrist.Y);g.RotateTransform((float)p.HandAngle);g.ScaleTransform((float)openHandScale,(float)openHandScale);g.TranslateTransform(-wrist.X,-wrist.Y);if(fist==0)g.DrawImageUnscaled(hand,0,0);else DrawAlpha(g,hand,new RectangleF(0,0,width,height),1-fist);g.Restore(saved);
+   if(fist>0){if(fistArt==null)fistArt=new PaintedSwordArt();PointF grip=RigParts.Mix(p.Wrist,p.Tip,.65);double angle=Math.Atan2(p.Tip.Y-p.Wrist.Y,p.Tip.X-p.Wrist.X)+Math.PI/2;fistArt.DrawHand(g,p.Wrist,grip,angle,unit,true,fist);}
   }
   internal ArmPose Sample(double amount,double phase) {
    amount=Math.Max(0,Math.Min(1,amount));
@@ -148,6 +198,6 @@ namespace JouchoPet {
     g.DrawImage(image,new[]{new PointF(destination.Left,destination.Top),new PointF(destination.Right,destination.Top),new PointF(destination.Left,destination.Bottom)},new RectangleF(0,0,image.Width,image.Height),GraphicsUnit.Pixel,attributes);
    }
   }
-  public void Dispose(){plate.Dispose();upper.Dispose();lower.Dispose();hand.Dispose();palm.Dispose();canvas.Dispose();elbowCap.Dispose();}
+  public void Dispose(){if(fistArt!=null)fistArt.Dispose();plate.Dispose();upper.Dispose();lower.Dispose();hand.Dispose();palm.Dispose();canvas.Dispose();elbowCap.Dispose();}
  }
 }

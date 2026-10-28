@@ -9,13 +9,13 @@ namespace JouchoPet
     {
         // Caller owns every returned bitmap. Keep atlas coordinates here so the
         // application and diagnostic renderer always load exactly the same art.
-        public static Bitmap[] LoadFront()
+        public static Bitmap[] LoadFront(CharacterForm form=CharacterForm.AnemoneI)
         {
             Bitmap[] sprites = new Bitmap[4];
             try
             {
                 string[] names={"front","pat","crouch","sleep"};
-                for(int i=0;i<sprites.Length;i++)sprites[i]=CharacterArt.Load(names[i]);
+                for(int i=0;i<sprites.Length;i++)sprites[i]=i==0&&form==CharacterForm.AnemoneII?A2FrontArt.Load():CharacterArt.Load(names[i],form);
                 return sprites;
             }
             catch

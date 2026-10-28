@@ -1,0 +1,17 @@
+PASS both verticals and facings: AnemoneI / 220; A1 unchanged, A2 changes confined to foot effects, endpoints intact
+PASS both verticals and facings: AnemoneII / 220; A1 unchanged, A2 changes confined to foot effects, endpoints intact
+PASS both verticals and facings: AnemoneI / 300; A1 unchanged, A2 changes confined to foot effects, endpoints intact
+PASS both verticals and facings: AnemoneII / 300; A1 unchanged, A2 changes confined to foot effects, endpoints intact
+PASS both verticals and facings: AnemoneI / 400; A1 unchanged, A2 changes confined to foot effects, endpoints intact
+PASS both verticals and facings: AnemoneII / 400; A1 unchanged, A2 changes confined to foot effects, endpoints intact
+PASS feathers have luminous cores and translucent halos / 220
+PASS feathers drift on existing action clock / 220
+PASS feathers have luminous cores and translucent halos / 300
+PASS feathers drift on existing action clock / 300
+PASS feathers have luminous cores and translucent halos / 400
+PASS feathers drift on existing action clock / 400
+PASS live mid-leap fade continues / -1 / -1
+PASS live mid-leap fade continues / -1 / 1
+PASS live mid-leap fade continues / 1 / -1
+PASS live mid-leap fade continues / 1 / 1
+PASS 16 checks; 288 baseline frame comparisons; 160 preview frames. No live desktop interaction.

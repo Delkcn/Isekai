@@ -7,7 +7,7 @@ namespace JouchoPet {
  // The proportion-corrected board and its walking/turning views bypass this correction.
  // This is a load-time color correction, not another exported frame sequence.
  static class HairPalette {
-  static double[] reference;
+  static readonly double[][] references=new double[2][]; static readonly object sync=new object();
   static double Mask(uint p,double x,double y) {
    double a=p>>24;if(a<32)return 0;
    double r=((p>>16)&255)*255/a,g=((p>>8)&255)*255/a,b=(p&255)*255/a;
@@ -25,11 +25,11 @@ namespace JouchoPet {
    }
    for(int c=0;c<3;c++)sum[c]/=Math.Max(1,sum[3]);return sum;
   }
-  public static void Match(Bitmap picture,double size,double crown) {
+  public static void Match(Bitmap picture,double size,double crown,CharacterForm form=CharacterForm.AnemoneI) { CharacterForms.Validate(form);double[] reference;lock(sync){reference=references[(int)form];
    if(reference==null) {
     Size c=PetRenderer.CanvasSize(300);
-    using(var first=CharacterArt.Normalized("profile-left",c.Width,c.Height,300))reference=Mean(PoseMesh.Read(first),c.Width,c.Height,300,0);
-   }
+    using(var first=CharacterArt.Normalized("profile-left",c.Width,c.Height,300,form))reference=Mean(PoseMesh.Read(first),c.Width,c.Height,300,0);
+   }references[(int)form]=reference;}
    int w=picture.Width,h=picture.Height;int[] pixels=PoseMesh.Read(picture);
    double[] mean=Mean(pixels,w,h,size,crown);if(mean[3]<20)return;
    for(int y=0;y<h;y++)for(int x=0;x<w;x++) {

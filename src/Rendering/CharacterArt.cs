@@ -13,7 +13,7 @@ namespace JouchoPet {
   public const double HeadToNeck=.30;
   public sealed class Pose {
    public string Name; public Rectangle Cell; public double Anchor,Crown,Neck,Sole;
-   public double Chin;
+   public double Chin; internal bool PreserveFaceRegistration,PreserveHairLength,RegisterA2SideCoat;
    public Pose(string name,int x,int y,int w,int h,double anchor,double crown,double neck,double sole,double chin=-1) {
     Name=name;Cell=new Rectangle(x,y,w,h);Anchor=anchor;Crown=crown;Neck=neck;Sole=sole;Chin=chin<0?neck-6:chin;
    }
@@ -31,14 +31,14 @@ namespace JouchoPet {
    new Pose("pat",1432,455,342,432,1613,460,606,870)
   };
   static readonly object Sync=new object();
-  static int[] atlas;static int atlasWidth,atlasHeight;
-  static void Ensure() {
-   lock(Sync)if(atlas==null)using(Bitmap b=AssetStore.Image(Resource)) {
+  static readonly int[][] atlases=new int[2][]; const int atlasWidth=1774;
+  static int[] Ensure(CharacterForm form) { CharacterForms.Validate(form);
+   lock(Sync){if(atlases[(int)form]!=null)return atlases[(int)form];using(Bitmap b=AssetStore.Image(Resource,form)) {
     if(b.Width!=1774 || b.Height!=887)throw new InvalidOperationException("The character atlas must retain its original 1774 x 887 dimensions.");
-    atlasWidth=b.Width;atlasHeight=b.Height;var p=new int[atlasWidth*atlasHeight];
+    var p=new int[b.Width*b.Height];
     var d=b.LockBits(new Rectangle(0,0,b.Width,b.Height),ImageLockMode.ReadOnly,PixelFormat.Format32bppArgb);
-    try{for(int y=0;y<b.Height;y++)Marshal.Copy(IntPtr.Add(d.Scan0,y*d.Stride),p,y*b.Width,b.Width);}finally{b.UnlockBits(d);}atlas=p;
-   }
+    try{for(int y=0;y<b.Height;y++)Marshal.Copy(IntPtr.Add(d.Scan0,y*d.Stride),p,y*b.Width,b.Width);}finally{b.UnlockBits(d);}atlases[(int)form]=p;return p;
+   }}
   }
   public static Pose Definition(string name) {foreach(Pose p in Poses)if(p.Name==name)return p;throw new ArgumentException("Unknown character pose: "+name);}
   static bool Inside(string name,int x,int y) {
@@ -58,12 +58,15 @@ namespace JouchoPet {
     default:return true;
    }
   }
-  public static Bitmap Load(string name) {
-   Ensure();Pose pose=Definition(name);Rectangle r=pose.Cell;var pixels=new int[r.Width*r.Height];
+  public static Bitmap Load(string name,CharacterForm form=CharacterForm.AnemoneI) {
+   int[] atlas=Ensure(form);Pose pose=Definition(name);Rectangle r=pose.Cell;var pixels=new int[r.Width*r.Height];
    for(int y=0;y<r.Height;y++)for(int x=0;x<r.Width;x++)if(Inside(name,x+r.X,y+r.Y) && (r.Y!=0 || y<=pose.Sole))pixels[y*r.Width+x]=atlas[(y+r.Y)*atlasWidth+x+r.X];
    KeepMainIsland(pixels,r.Width,r.Height);
+   if(form==CharacterForm.AnemoneII&&(name=="left"||name=="right"||name=="profile-left"||name=="profile-right"))
+    pose=new Pose(name,r.X,r.Y,r.Width,r.Height,pose.Anchor,pose.Crown,pose.Neck,pose.Sole,pose.Chin){RegisterA2SideCoat=true};
    Bitmap result=new Bitmap(r.Width,r.Height,PixelFormat.Format32bppArgb);var data=result.LockBits(new Rectangle(0,0,r.Width,r.Height),ImageLockMode.WriteOnly,PixelFormat.Format32bppArgb);
-   try{for(int y=0;y<r.Height;y++)Marshal.Copy(pixels,y*r.Width,IntPtr.Add(data.Scan0,y*data.Stride),r.Width);}finally{result.UnlockBits(data);}result.Tag=pose;return result;
+   try{for(int y=0;y<r.Height;y++)Marshal.Copy(pixels,y*r.Width,IntPtr.Add(data.Scan0,y*data.Stride),r.Width);}finally{result.UnlockBits(data);}
+   if(form==CharacterForm.AnemoneII){A2SideNose.Apply(result,pose);A2SideMouth.Apply(result,pose);}result.Tag=pose;return result;
   }
   internal static void KeepMainIsland(int[] pixels,int width,int height) {
    // Remove neighboring islands left by the nonuniform gutters, without repainting.
@@ -102,9 +105,10 @@ namespace JouchoPet {
      if(a<0 || a>=source.Height)continue;
      g.DrawImage(source,new RectangleF((float)(w*.5+(p.Cell.X-p.Anchor)*scale),y,(float)(source.Width*scale),1),new RectangleF(0,(float)a,source.Width,(float)Math.Min(b-a,source.Height-a)),GraphicsUnit.Pixel);
     }
-   }HairLength.Apply(result,p,size);return result;
+   }if(!p.PreserveHairLength)HairLength.Apply(result,p,size);if(!p.PreserveFaceRegistration)EyePlacement.Apply(result,p,size);
+   if(p.RegisterA2SideCoat)A2SideCoatLength.Apply(result,p,size);return result;
   }
-  public static Bitmap Normalized(string name,int w,int h,double size){using(Bitmap b=Load(name))return Normalize(b,w,h,size);}
+  public static Bitmap Normalized(string name,int w,int h,double size,CharacterForm form=CharacterForm.AnemoneI){using(Bitmap b=Load(name,form))return Normalize(b,w,h,size);}
   // Ordered anatomical rows for the existing rest and carry interpolation engine.
   public static PoseMesh.Pose Register(Bitmap bitmap,string name,double size) {
    Pose p=Definition(name);double top=Y(p,p.Crown,size),neck=Y(p,p.Neck,size),sole=28+size*.98;

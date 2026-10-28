@@ -76,12 +76,38 @@ namespace JouchoPet
             return result;
         }
         public Point ScreenPoint(Point p) { XY xy=new XY(p);if(!ClientToScreen(hwnd,ref xy))throw new InvalidOperationException("桌面坐标转换失败。");return xy.Point; }
-        internal Rectangle IconScreenRectangle(Item item){
+        // Selection only: no focus steal, rename or position flags. Verify identities
+        // again because Explorer indices may change between enumeration and selection.
+        internal void SelectFiles(List<Item> items) {
+            for(int i=0;i<items.Count;i++) {
+                IntPtr pidl=IntPtr.Zero;
+                try {
+                    Check(view.Item(items[i].Index,out pidl));XY actual;Check(view.GetItemPosition(pidl,out actual));
+                    if(Identity(pidl)!=items[i].Id||actual.Point!=items[i].Position)throw new InvalidOperationException("图标已改变，选中操作已停止。");
+                    // SVSI_SELECT | SVSI_NOTAKEFOCUS; first item replaces old selection.
+                    Check(view.SelectItem(items[i].Index,0x40000001u|(i==0?0x4u:0u)));
+                }finally{if(pidl!=IntPtr.Zero)Marshal.FreeCoTaskMem(pidl);}
+            }
+            foreach(var item in items)if(!IsSelected(item))throw new InvalidOperationException("桌面未保留文件的选中状态，请重试。");
+        }
+        internal bool IsSelected(Item item) {
+            IntPtr pidl=IntPtr.Zero;
+            try{Check(view.Item(item.Index,out pidl));if(Identity(pidl)!=item.Id)throw new InvalidOperationException("图标标识已改变。");uint flags;Check(((FolderView2)viewObject).GetSelectionState(pidl,out flags));return (flags&1)!=0;}
+            finally{if(pidl!=IntPtr.Zero)Marshal.FreeCoTaskMem(pidl);}
+        }
+        internal void RestoreSelected(Item item,bool selected) {
+            IntPtr pidl=IntPtr.Zero;
+            try{Check(view.Item(item.Index,out pidl));if(Identity(pidl)!=item.Id)throw new InvalidOperationException("图标标识已改变。");Check(view.SelectItem(item.Index,0x40000000u|(selected?1u:0u)));}
+            finally{if(pidl!=IntPtr.Zero)Marshal.FreeCoTaskMem(pidl);}
+        }
+        internal Rectangle IconScreenRectangle(Item item){return ItemScreenRectangle(item,false);}
+        internal Rectangle SelectionScreenRectangle(Item item){return ItemScreenRectangle(item,true);}
+        Rectangle ItemScreenRectangle(Item item,bool includeLabel){
             IntPtr list=DesktopIconView.Find(hwnd);
             if(list==IntPtr.Zero)throw new InvalidOperationException("当前桌面不提供可读取的图标边界。");
             using(var reader=new DesktopIconView(list)){
                 if(item.Index<0||item.Index>=reader.Count||reader.Read(item.Index)!=item.Position)throw new InvalidOperationException("图标位置已改变，请重新选择文件。");
-                Rectangle r=reader.IconRectangle(item.Index);XY a=new XY(r.Location),b=new XY(new Point(r.Right,r.Bottom));
+                Rectangle r=reader.ItemRectangle(item.Index,includeLabel);XY a=new XY(r.Location),b=new XY(new Point(r.Right,r.Bottom));
                 if(!ClientToScreen(list,ref a)||!ClientToScreen(list,ref b))throw new InvalidOperationException("图标屏幕边界转换失败。");
                 return Rectangle.FromLTRB(a.X,a.Y,b.X,b.Y);
             }
@@ -204,7 +230,7 @@ namespace JouchoPet
             void SetTileViewProperties();void SetExtendedTileViewProperties();void SetText();
             void SetCurrentFolderFlags();void GetCurrentFolderFlags();void GetSortColumnCount();
             void SetSortColumns();void GetSortColumns();void GetItem();void GetVisibleItem();
-            void GetSelectedItem();void GetSelection();void GetSelectionState();void InvokeVerbOnSelection();
+            void GetSelectedItem();void GetSelection();[PreserveSig]int GetSelectionState(IntPtr pidl,out uint flags);void InvokeVerbOnSelection();
             void SetViewModeAndIconSize();
             [PreserveSig]int GetViewModeAndIconSize(out uint mode,out int size);
         }

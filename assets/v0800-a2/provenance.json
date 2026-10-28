@@ -1,0 +1,12 @@
+{
+  "version": "0.8.0-preview",
+  "method": "Built-in image_gen; source alpha preserved; final files copied into workspace",
+  "face_asset": "anemone-ii-atlas.png",
+  "face_generated_file": "exec-77f188b6-ecdc-4d0b-9562-15a94addc140.png",
+  "prompt_summary_note": "Specification recovered from the task record; not a verbatim export of the original tool prompt.",
+  "prompt_summary": "Edit the existing transparent A2 atlas, using the original A1 atlas as the facial geometry reference. Restore A1 front and pat face/head proportions, face height, chin, eye placement and expression; avoid a flattened face. Preserve atlas dimensions 1774x887, cell positions, body proportions, clothing cut and length, poses and transparency. Retain A2 ivory coat, white petals with pale blue centers, cyan accent strands, beige main hair, black trim and wrist pieces. Preserve original pink and blue eye colors. Anatomical left short boot is white with black stocking and pale laces above; anatomical right tall boot is black. Do not introduce Nemophila or Heliotrope design elements.",
+  "other_assets": "walk-legs.png, sleep-keys.png, greeting-underlay.png, underarm-backplate-hires.png copied unchanged from art-review-v080-a2/draft-01",
+  "earlier_prompts": "art-review-v080-a2/draft-01/PROMPTS.json",
+  "references": ["D:/微信图片_20261026131238_391_10.jpg", "D:/微信图片_20261026131239_392_10.jpg", "D:/微信图片_20261026131240_393_10.jpg"],
+  "registration": "A1 and A2 share CharacterArt definitions, eye anchors, skeletons and animation code. High-resolution underarm patch sampled with original UV coordinates."
+}
